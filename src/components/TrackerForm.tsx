@@ -11,12 +11,18 @@ export function TrackerForm() {
   const formRef = useRef<HTMLFormElement>(null);
   const [type, setType] = useState<TrackerType>("duration");
   const [color, setColor] = useState(SWATCHES[0]);
+  const [error, setError] = useState<string | null>(null);
 
   return (
     <form
       ref={formRef}
       action={async (formData) => {
-        await createTracker(formData);
+        const result = await createTracker(formData);
+        if (result?.error) {
+          setError(result.error);
+          return;
+        }
+        setError(null);
         formRef.current?.reset();
         setType("duration");
         setColor(SWATCHES[0]);
@@ -115,6 +121,8 @@ export function TrackerForm() {
       >
         Add tracker
       </button>
+
+      {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
     </form>
   );
 }

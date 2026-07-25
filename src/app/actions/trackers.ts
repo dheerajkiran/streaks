@@ -16,15 +16,20 @@ export async function createTracker(formData: FormData) {
   const unit = String(formData.get("unit") ?? "").trim();
   const color = String(formData.get("color") ?? "#22c55e");
 
-  if (!name || (type !== "duration" && type !== "quantity" && type !== "time")) return;
+  if (!name) return { error: "Name is required." };
+  if (type !== "duration" && type !== "quantity" && type !== "time") {
+    return { error: "Invalid tracker type." };
+  }
 
-  await supabase.from("trackers").insert({
+  const { error } = await supabase.from("trackers").insert({
     user_id: user.id,
     name,
     type,
     unit: type === "quantity" ? unit || "count" : type === "duration" ? "minutes" : null,
     color,
   });
+
+  if (error) return { error: error.message };
 
   revalidatePath("/trackers");
   revalidatePath("/");
