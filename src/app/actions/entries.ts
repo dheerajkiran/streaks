@@ -34,6 +34,11 @@ export async function createEntry(formData: FormData) {
     endTime = String(formData.get("end_time") ?? "");
     if (!startTime || !endTime) return;
     value = minutesBetween(startTime, endTime);
+  } else if (logMode === "time") {
+    startTime = String(formData.get("time_value") ?? "");
+    if (!startTime) return;
+    const [h, m] = startTime.split(":").map(Number);
+    value = h * 60 + m;
   } else {
     value = Number(formData.get("value"));
     if (!Number.isFinite(value) || value <= 0) return;

@@ -40,3 +40,12 @@ export function monthWeeks(year: number, month: number): (Date | null)[][] {
 export function toDateKey(date: Date) {
   return date.toISOString().slice(0, 10);
 }
+
+/** Formats minutes-since-midnight (as stored for "time" trackers) as a clock time. */
+export function minutesToClockLabel(totalMinutes: number) {
+  const h = Math.floor(totalMinutes / 60) % 24;
+  const m = Math.round(totalMinutes % 60);
+  const date = new Date();
+  date.setHours(h, m, 0, 0);
+  return date.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+}

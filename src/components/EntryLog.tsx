@@ -40,7 +40,9 @@ export function EntryLog({ tracker, entries }: { tracker: Tracker; entries: Entr
                 })}
               </span>
               <span className="font-medium" suppressHydrationWarning>
-                {entry.start_time && entry.end_time
+                {tracker.type === "time" && entry.start_time
+                  ? formatTime(entry.start_time)
+                  : entry.start_time && entry.end_time
                   ? `${formatTime(entry.start_time)}–${formatTime(entry.end_time)} (${entry.value} ${unit})`
                   : `${entry.value} ${unit}`}
               </span>

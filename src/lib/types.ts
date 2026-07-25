@@ -1,4 +1,4 @@
-export type TrackerType = "duration" | "quantity";
+export type TrackerType = "duration" | "quantity" | "time";
 
 export type Tracker = {
   id: string;

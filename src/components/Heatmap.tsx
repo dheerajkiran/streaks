@@ -1,4 +1,4 @@
-import { bucketAlpha, hexToRgba, monthWeeks, toDateKey } from "@/lib/heatmap";
+import { bucketAlpha, hexToRgba, minutesToClockLabel, monthWeeks, toDateKey } from "@/lib/heatmap";
 import type { Tracker } from "@/lib/types";
 
 const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -35,13 +35,16 @@ export function Heatmap({
                 return <div key={j} className="h-4 w-4" />;
               }
               const key = toDateKey(date);
+              const hasEntry = key in dailyTotals;
               const value = dailyTotals[key] ?? 0;
               const alpha = bucketAlpha(value, max);
+              const valueLabel =
+                tracker.type === "time" ? minutesToClockLabel(value) : `${value} ${unit}`;
               const label = `${date.toLocaleDateString("en-US", {
                 month: "short",
                 day: "numeric",
                 timeZone: "UTC",
-              })}: ${value > 0 ? `${value} ${unit}` : "no entry"}`;
+              })}: ${hasEntry ? valueLabel : "no entry"}`;
 
               return (
                 <div

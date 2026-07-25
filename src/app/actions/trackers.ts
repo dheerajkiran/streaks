@@ -16,13 +16,13 @@ export async function createTracker(formData: FormData) {
   const unit = String(formData.get("unit") ?? "").trim();
   const color = String(formData.get("color") ?? "#22c55e");
 
-  if (!name || (type !== "duration" && type !== "quantity")) return;
+  if (!name || (type !== "duration" && type !== "quantity" && type !== "time")) return;
 
   await supabase.from("trackers").insert({
     user_id: user.id,
     name,
     type,
-    unit: type === "duration" ? "minutes" : unit || "count",
+    unit: type === "quantity" ? unit || "count" : type === "duration" ? "minutes" : null,
     color,
   });
 

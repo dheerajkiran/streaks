@@ -9,15 +9,25 @@ function formatDuration(minutes: number) {
   return `${h}h ${m}m`;
 }
 
+function formatTime(time: string) {
+  const [h, m] = time.split(":").map(Number);
+  const date = new Date();
+  date.setHours(h, m, 0, 0);
+  return date.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+}
+
 export function TodayPanel({
   trackers,
   totals,
+  latestTimes,
 }: {
   trackers: Tracker[];
   totals: Record<string, number>;
+  latestTimes: Record<string, string>;
 }) {
   const durationTrackers = trackers.filter((t) => t.type === "duration");
   const quantityTrackers = trackers.filter((t) => t.type === "quantity");
+  const timeTrackers = trackers.filter((t) => t.type === "time");
 
   const totalMinutesToday = durationTrackers.reduce(
     (sum, t) => sum + (totals[t.id] ?? 0),
@@ -88,7 +98,7 @@ export function TodayPanel({
         </div>
       )}
 
-      {quantityTrackers.length > 0 && (
+      {(quantityTrackers.length > 0 || timeTrackers.length > 0) && (
         <div>
           <p className="text-xs text-neutral-400 mb-2">Also today</p>
           <div className="grid grid-cols-2 gap-2">
@@ -109,6 +119,23 @@ export function TodayPanel({
                   <span className="text-xs font-normal text-neutral-400 ml-1">
                     {tracker.unit}
                   </span>
+                </div>
+              </div>
+            ))}
+            {timeTrackers.map((tracker) => (
+              <div
+                key={tracker.id}
+                className="rounded-lg border border-neutral-200 dark:border-neutral-800 px-3 py-2"
+              >
+                <div className="flex items-center gap-1.5 text-xs text-neutral-500">
+                  <span
+                    className="h-2 w-2 rounded-full shrink-0"
+                    style={{ backgroundColor: tracker.color }}
+                  />
+                  {tracker.name}
+                </div>
+                <div className="text-lg font-semibold mt-0.5">
+                  {tracker.id in latestTimes ? formatTime(latestTimes[tracker.id]) : "—"}
                 </div>
               </div>
             ))}

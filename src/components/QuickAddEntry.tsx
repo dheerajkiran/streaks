@@ -10,7 +10,7 @@ function today() {
   return local.toISOString().slice(0, 10);
 }
 
-type LogMode = "value" | "range";
+type LogMode = "value" | "range" | "time";
 
 export function QuickAddEntry({ trackers }: { trackers: Tracker[] }) {
   const formRef = useRef<HTMLFormElement>(null);
@@ -23,10 +23,10 @@ export function QuickAddEntry({ trackers }: { trackers: Tracker[] }) {
   );
 
   useEffect(() => {
-    if (selected?.type !== "duration" && logMode === "range") {
-      setLogMode("value");
-    }
-  }, [selected, logMode]);
+    if (selected?.type === "time") setLogMode("time");
+    else if (selected?.type === "quantity") setLogMode("value");
+    else if (selected?.type === "duration") setLogMode((m) => (m === "time" ? "value" : m));
+  }, [selected?.type]);
 
   if (trackers.length === 0) {
     return (
@@ -44,7 +44,7 @@ export function QuickAddEntry({ trackers }: { trackers: Tracker[] }) {
       action={async (formData) => {
         await createEntry(formData);
         formRef.current?.reset();
-        setLogMode("value");
+        setLogMode(selected?.type === "time" ? "time" : "value");
       }}
       className="flex flex-wrap items-end gap-3 rounded-xl border border-neutral-200 dark:border-neutral-800 p-4"
     >
@@ -125,6 +125,18 @@ export function QuickAddEntry({ trackers }: { trackers: Tracker[] }) {
             />
           </div>
         </>
+      ) : logMode === "time" ? (
+        <div>
+          <label className="block text-xs font-medium text-neutral-500 mb-1">
+            Time
+          </label>
+          <input
+            name="time_value"
+            type="time"
+            required
+            className="rounded-lg border border-neutral-300 dark:border-neutral-700 bg-transparent px-3 py-2 text-sm outline-none focus:border-neutral-500"
+          />
+        </div>
       ) : (
         <div>
           <label className="block text-xs font-medium text-neutral-500 mb-1">

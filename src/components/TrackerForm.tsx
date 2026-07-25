@@ -60,6 +60,16 @@ export function TrackerForm() {
             />
             Quantity
           </label>
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="radio"
+              name="type"
+              value="time"
+              checked={type === "time"}
+              onChange={() => setType("time")}
+            />
+            Time of day
+          </label>
         </div>
       </div>
 
