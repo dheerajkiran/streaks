@@ -5,6 +5,7 @@ import { TrackerSelect } from "@/components/TrackerSelect";
 import { Heatmap } from "@/components/Heatmap";
 import { EntryLog } from "@/components/EntryLog";
 import { TodayPanel } from "@/components/TodayPanel";
+import { DayTimeline } from "@/components/DayTimeline";
 import type { Entry, Tracker } from "@/lib/types";
 
 function currentMonthStr() {
@@ -67,10 +68,11 @@ export default async function DashboardPage({
 
   const todayTotals: Record<string, number> = {};
   const todayLatestTime: Record<string, string> = {};
+  let todayEntries: Entry[] = [];
   if (activeTrackers.length > 0) {
-    const { data: todayEntries } = await supabase
+    const { data } = await supabase
       .from("entries")
-      .select("tracker_id, value, start_time")
+      .select("*")
       .in(
         "tracker_id",
         activeTrackers.map((t) => t.id)
@@ -78,7 +80,8 @@ export default async function DashboardPage({
       .eq("entry_date", todayStr())
       .order("created_at", { ascending: true });
 
-    for (const e of todayEntries ?? []) {
+    todayEntries = (data ?? []) as Entry[];
+    for (const e of todayEntries) {
       todayTotals[e.tracker_id] = (todayTotals[e.tracker_id] ?? 0) + Number(e.value);
       if (e.start_time) todayLatestTime[e.tracker_id] = e.start_time;
     }
@@ -111,6 +114,10 @@ export default async function DashboardPage({
           <h1 className="text-lg font-semibold mb-4">Log an entry</h1>
           <QuickAddEntry trackers={activeTrackers} />
         </div>
+
+        {activeTrackers.length > 0 && (
+          <DayTimeline trackers={activeTrackers} entries={todayEntries} />
+        )}
 
         {trackers.length === 0 ? (
           <p className="text-sm text-neutral-400">
