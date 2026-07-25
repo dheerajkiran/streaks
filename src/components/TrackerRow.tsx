@@ -115,7 +115,7 @@ export function TrackerRow({ tracker }: { tracker: Tracker }) {
         <div>
           <label className="block text-xs font-medium text-neutral-500 mb-1">Color</label>
           <input type="hidden" name="color" value={color} />
-          <div className="flex gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             {SWATCHES.map((swatch) => (
               <button
                 key={swatch}
@@ -130,6 +130,14 @@ export function TrackerRow({ tracker }: { tracker: Tracker }) {
                 aria-label={swatch}
               />
             ))}
+            <input
+              type="color"
+              value={color}
+              onChange={(e) => setColor(e.target.value)}
+              className="h-6 w-6 rounded-full border border-neutral-300 dark:border-neutral-700 p-0 cursor-pointer [&::-webkit-color-swatch-wrapper]:p-0 [&::-webkit-color-swatch]:rounded-full [&::-webkit-color-swatch]:border-none"
+              aria-label="Choose any color"
+              title="Choose any color"
+            />
           </div>
         </div>
 
