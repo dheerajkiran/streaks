@@ -4,7 +4,8 @@ import { useRef, useState } from "react";
 import { createTracker } from "@/app/actions/trackers";
 import type { TrackerType } from "@/lib/types";
 
-const SWATCHES = ["#22c55e", "#3b82f6", "#f97316", "#ec4899", "#a855f7", "#eab308"];
+// Validated categorical palette (CVD-safe adjacent pairs) - see dataviz skill.
+const SWATCHES = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300"];
 
 export function TrackerForm() {
   const formRef = useRef<HTMLFormElement>(null);

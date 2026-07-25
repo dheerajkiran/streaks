@@ -4,11 +4,17 @@ import { QuickAddEntry } from "@/components/QuickAddEntry";
 import { TrackerSelect } from "@/components/TrackerSelect";
 import { Heatmap } from "@/components/Heatmap";
 import { EntryLog } from "@/components/EntryLog";
+import { TodayPanel } from "@/components/TodayPanel";
 import type { Entry, Tracker } from "@/lib/types";
 
 function currentMonthStr() {
   const now = new Date();
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+}
+
+function todayStr() {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
 }
 
 function monthBounds(monthStr: string) {
@@ -59,6 +65,22 @@ export default async function DashboardPage({
     }
   }
 
+  const todayTotals: Record<string, number> = {};
+  if (activeTrackers.length > 0) {
+    const { data: todayEntries } = await supabase
+      .from("entries")
+      .select("tracker_id, value")
+      .in(
+        "tracker_id",
+        activeTrackers.map((t) => t.id)
+      )
+      .eq("entry_date", todayStr());
+
+    for (const e of todayEntries ?? []) {
+      todayTotals[e.tracker_id] = (todayTotals[e.tracker_id] ?? 0) + Number(e.value);
+    }
+  }
+
   let recentEntries: Entry[] = [];
   if (selectedTracker) {
     const { data } = await supabase
@@ -80,57 +102,63 @@ export default async function DashboardPage({
   });
 
   return (
-    <div className="max-w-3xl space-y-8">
-      <div>
-        <h1 className="text-lg font-semibold mb-4">Log an entry</h1>
-        <QuickAddEntry trackers={activeTrackers} />
+    <div className="max-w-6xl flex flex-col lg:flex-row gap-8 items-start">
+      <div className="flex-1 min-w-0 space-y-8">
+        <div>
+          <h1 className="text-lg font-semibold mb-4">Log an entry</h1>
+          <QuickAddEntry trackers={activeTrackers} />
+        </div>
+
+        {trackers.length === 0 ? (
+          <p className="text-sm text-neutral-400">
+            Create a tracker on the{" "}
+            <Link href="/trackers" className="underline">
+              Trackers
+            </Link>{" "}
+            page to see your heatmap.
+          </p>
+        ) : (
+          selectedTracker && (
+            <div>
+              <div className="flex items-center justify-between mb-4 gap-4">
+                <TrackerSelect
+                  trackers={trackers}
+                  selectedId={selectedTracker.id}
+                  month={monthStr}
+                />
+                <div className="flex items-center gap-3 text-sm">
+                  <Link href={`/?tracker=${selectedTracker.id}&month=${prevMonthStr}`}>
+                    ‹
+                  </Link>
+                  <span className="w-32 text-center">{monthLabel}</span>
+                  {isCurrentMonth ? (
+                    <span className="text-neutral-300">›</span>
+                  ) : (
+                    <Link href={`/?tracker=${selectedTracker.id}&month=${nextMonthStr}`}>
+                      ›
+                    </Link>
+                  )}
+                </div>
+              </div>
+              <Heatmap
+                tracker={selectedTracker}
+                year={year}
+                month={month}
+                dailyTotals={dailyTotals}
+              />
+
+              <h2 className="text-sm font-medium text-neutral-500 mt-8 mb-2">
+                Recent entries
+              </h2>
+              <EntryLog tracker={selectedTracker} entries={recentEntries} />
+            </div>
+          )
+        )}
       </div>
 
-      {trackers.length === 0 ? (
-        <p className="text-sm text-neutral-400">
-          Create a tracker on the{" "}
-          <Link href="/trackers" className="underline">
-            Trackers
-          </Link>{" "}
-          page to see your heatmap.
-        </p>
-      ) : (
-        selectedTracker && (
-          <div>
-            <div className="flex items-center justify-between mb-4 gap-4">
-              <TrackerSelect
-                trackers={trackers}
-                selectedId={selectedTracker.id}
-                month={monthStr}
-              />
-              <div className="flex items-center gap-3 text-sm">
-                <Link href={`/?tracker=${selectedTracker.id}&month=${prevMonthStr}`}>
-                  ‹
-                </Link>
-                <span className="w-32 text-center">{monthLabel}</span>
-                {isCurrentMonth ? (
-                  <span className="text-neutral-300">›</span>
-                ) : (
-                  <Link href={`/?tracker=${selectedTracker.id}&month=${nextMonthStr}`}>
-                    ›
-                  </Link>
-                )}
-              </div>
-            </div>
-            <Heatmap
-              tracker={selectedTracker}
-              year={year}
-              month={month}
-              dailyTotals={dailyTotals}
-            />
-
-            <h2 className="text-sm font-medium text-neutral-500 mt-8 mb-2">
-              Recent entries
-            </h2>
-            <EntryLog tracker={selectedTracker} entries={recentEntries} />
-          </div>
-        )
-      )}
+      <div className="w-full lg:w-72 shrink-0">
+        <TodayPanel trackers={activeTrackers} totals={todayTotals} />
+      </div>
     </div>
   );
 }
