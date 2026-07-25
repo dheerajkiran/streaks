@@ -35,6 +35,35 @@ export async function createTracker(formData: FormData) {
   revalidatePath("/");
 }
 
+export async function updateTracker(trackerId: string, formData: FormData) {
+  const supabase = await createClient();
+
+  const name = String(formData.get("name") ?? "").trim();
+  const type = String(formData.get("type") ?? "") as TrackerType;
+  const unit = String(formData.get("unit") ?? "").trim();
+  const color = String(formData.get("color") ?? "#22c55e");
+
+  if (!name) return { error: "Name is required." };
+  if (type !== "duration" && type !== "quantity" && type !== "time") {
+    return { error: "Invalid tracker type." };
+  }
+
+  const { error } = await supabase
+    .from("trackers")
+    .update({
+      name,
+      type,
+      unit: type === "quantity" ? unit || "count" : type === "duration" ? "minutes" : null,
+      color,
+    })
+    .eq("id", trackerId);
+
+  if (error) return { error: error.message };
+
+  revalidatePath("/trackers");
+  revalidatePath("/");
+}
+
 export async function setTrackerArchived(trackerId: string, archived: boolean) {
   const supabase = await createClient();
   await supabase
