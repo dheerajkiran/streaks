@@ -1,46 +1,74 @@
 # Streaks
 
-A private, personal activity tracker. Define your own trackers (study, work, family, water, anything), log entries from any device, and see a GitHub-style contribution heatmap per month for whichever tracker you select.
+A personal activity tracker for logging how a day actually gets spent — study, work, family, water, sleep, or any custom metric — from any device, with a GitHub-style contribution heatmap and a 24-hour view of the day.
 
-## Stack
+> Private project, built for personal use. See [ARCHITECTURE.md](ARCHITECTURE.md) for how it's put together.
 
-- [Next.js](https://nextjs.org) (App Router, TypeScript, Tailwind)
-- [Supabase](https://supabase.com) (Postgres + Auth) for data and multi-device sync
+## Features
 
-## 1. Create a Supabase project
+- **Custom trackers, anytime** — create or archive a tracker whenever a new thing is worth tracking. Three types:
+  - **Duration** — minutes, logged either as a raw number or as a start–end time range
+  - **Quantity** — a number with your own unit (glasses, pages, reps, ...)
+  - **Time of day** — a single point-in-time event (wake-up time, sleep time)
+- **Quick-add logging** — log the same tracker multiple times a day (e.g. a work session before and after a break); totals combine automatically
+- **Monthly heatmap** — GitHub-contribution-style calendar for any tracker, color intensity scaled by daily total
+- **Today panel** — total time tracked today, a bar per duration tracker, and stat tiles for quantity/time-of-day trackers
+- **24-hour timeline** — a 12 AM–11:59 PM view of today, colored by tracker, showing what was logged when
+- **Entry log** — every individual entry, with its logged time, editable/deletable
+- **Multi-device** — sign in from a laptop, phone, or iPad; data lives in one shared database, not on any one device
+
+## Tech stack
+
+- [Next.js](https://nextjs.org) 16 (App Router, TypeScript, Tailwind CSS)
+- [Supabase](https://supabase.com) (Postgres + Auth) for data storage, row-level security, and cross-device sync
+- [Vercel](https://vercel.com) for hosting/deployment
+
+## Getting started
+
+### 1. Create a Supabase project
 
 1. Go to [supabase.com](https://supabase.com), sign in, and create a new project (free tier is fine).
-2. Once it's provisioned, open **SQL Editor** and run the contents of [`supabase/migrations/0001_init.sql`](supabase/migrations/0001_init.sql). This creates the `trackers` and `entries` tables with row-level security so only you can see your own data.
-3. Open **Project Settings → API**. You'll need two values:
+2. Open **SQL Editor** and run each file in [`supabase/migrations/`](supabase/migrations) in order (`0001`, `0002`, `0003`, ...). Each one is a small, additive schema change — see [ARCHITECTURE.md](ARCHITECTURE.md#migrations) for what each does.
+3. Open **Project Settings → API Keys**. You'll need:
    - **Project URL**
-   - **anon public** key
+   - **anon / public** (or **publishable**) key — never the `service_role`/**secret** key
 
-## 2. Configure environment variables
+### 2. Configure environment variables
 
 ```bash
 cp .env.local.example .env.local
 ```
 
-Fill in `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` with the values from step 1. `.env.local` is gitignored, so these never get committed.
+Fill in `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` with the values from step 1. `.env.local` is gitignored and never committed.
 
-## 3. Enable email auth
+### 3. Enable auth
 
-In Supabase, go to **Authentication → Providers** and make sure **Email** is enabled (it is by default). This app uses magic-link (passwordless) sign-in — no extra config needed for local development. For production, set **Authentication → URL Configuration → Site URL** to your deployed URL so magic-link emails redirect correctly.
+In Supabase, go to **Authentication → Providers** and confirm **Email** is enabled (default). The app supports both magic-link (passwordless) and password sign-in. For production, set **Authentication → URL Configuration → Site URL** to your deployed URL, and add it under **Redirect URLs** too, so magic-link emails redirect correctly.
 
-## 4. Run locally
+### 4. Run locally
 
 ```bash
 npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000), enter your email on the login page, and click the magic link sent to your inbox.
+Open [http://localhost:3000](http://localhost:3000) and sign in.
 
-## 5. Deploy
+## Deployment
 
-Push this repo to GitHub (already done if you're reading this from the repo) and import it into [Vercel](https://vercel.com/new). Add the same two environment variables (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`) in the Vercel project settings. Once deployed, update the Supabase **Site URL** (and add the Vercel URL to **Redirect URLs**) so magic links work in production.
+Connected to Vercel via its GitHub integration: every push to `main` auto-builds and deploys. To set up your own deployment, import this repo on [Vercel](https://vercel.com/new) and add the same two environment variables in the project's settings. See [ARCHITECTURE.md](ARCHITECTURE.md#deployment-pipeline) for the full flow.
 
-## How it works
+## Project structure
 
-- **Trackers** (`/trackers`) — create a tracker with a name, type (`duration` in minutes, or `quantity` with a custom unit), and color. Archive or delete anytime; archiving keeps history intact for past heatmaps.
-- **Dashboard** (`/`) — quick-add an entry for any active tracker, and view a monthly heatmap for a selected tracker (color intensity scaled by daily total, hover a day for the exact value).
+```
+src/
+  app/
+    (dashboard)/        # authenticated routes: dashboard, /trackers
+    actions/             # server actions (auth, trackers, entries)
+    auth/confirm/        # magic-link / OAuth callback route
+    login/                # sign-in page
+  components/            # UI components (heatmap, timeline, forms, ...)
+  lib/                    # Supabase clients, shared types, chart helpers
+  proxy.ts                # session-refresh + route protection (Next.js 16's renamed middleware)
+supabase/migrations/      # SQL schema, applied in order
+```
