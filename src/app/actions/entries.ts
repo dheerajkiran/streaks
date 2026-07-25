@@ -3,6 +3,14 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 
+function minutesBetween(start: string, end: string) {
+  const [sh, sm] = start.split(":").map(Number);
+  const [eh, em] = end.split(":").map(Number);
+  let diff = eh * 60 + em - (sh * 60 + sm);
+  if (diff <= 0) diff += 24 * 60;
+  return diff;
+}
+
 export async function createEntry(formData: FormData) {
   const supabase = await createClient();
   const {
@@ -11,11 +19,25 @@ export async function createEntry(formData: FormData) {
   if (!user) return;
 
   const trackerId = String(formData.get("tracker_id") ?? "");
-  const value = Number(formData.get("value"));
   const entryDate = String(formData.get("entry_date") ?? "");
   const note = String(formData.get("note") ?? "").trim();
+  const logMode = String(formData.get("log_mode") ?? "value");
 
-  if (!trackerId || !Number.isFinite(value) || value <= 0 || !entryDate) return;
+  if (!trackerId || !entryDate) return;
+
+  let value: number;
+  let startTime: string | null = null;
+  let endTime: string | null = null;
+
+  if (logMode === "range") {
+    startTime = String(formData.get("start_time") ?? "");
+    endTime = String(formData.get("end_time") ?? "");
+    if (!startTime || !endTime) return;
+    value = minutesBetween(startTime, endTime);
+  } else {
+    value = Number(formData.get("value"));
+    if (!Number.isFinite(value) || value <= 0) return;
+  }
 
   await supabase.from("entries").insert({
     user_id: user.id,
@@ -23,6 +45,8 @@ export async function createEntry(formData: FormData) {
     value,
     entry_date: entryDate,
     note: note || null,
+    start_time: startTime,
+    end_time: endTime,
   });
 
   revalidatePath("/");

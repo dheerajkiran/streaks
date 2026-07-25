@@ -3,6 +3,13 @@
 import { deleteEntry } from "@/app/actions/entries";
 import type { Entry, Tracker } from "@/lib/types";
 
+function formatTime(time: string) {
+  const [h, m] = time.split(":").map(Number);
+  const date = new Date();
+  date.setHours(h, m, 0, 0);
+  return date.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+}
+
 export function EntryLog({ tracker, entries }: { tracker: Tracker; entries: Entry[] }) {
   const unit = tracker.type === "duration" ? "min" : tracker.unit ?? "";
 
@@ -33,7 +40,9 @@ export function EntryLog({ tracker, entries }: { tracker: Tracker; entries: Entr
                 })}
               </span>
               <span className="font-medium">
-                {entry.value} {unit}
+                {entry.start_time && entry.end_time
+                  ? `${formatTime(entry.start_time)}–${formatTime(entry.end_time)} (${entry.value} ${unit})`
+                  : `${entry.value} ${unit}`}
               </span>
               {entry.note && <span className="text-neutral-400">{entry.note}</span>}
             </div>

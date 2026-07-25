@@ -18,6 +18,8 @@ export type Entry = {
   entry_date: string;
   value: number;
   note: string | null;
+  start_time: string | null;
+  end_time: string | null;
   created_at: string;
 };
 
