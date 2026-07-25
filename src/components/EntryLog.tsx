@@ -31,7 +31,7 @@ export function EntryLog({ tracker, entries }: { tracker: Tracker; entries: Entr
             className="flex items-center justify-between rounded-lg border border-neutral-200 dark:border-neutral-800 px-3 py-2 text-sm"
           >
             <div className="flex items-center gap-3">
-              <span className="text-neutral-400 tabular-nums">
+              <span className="text-neutral-400 tabular-nums" suppressHydrationWarning>
                 {loggedAt.toLocaleString(undefined, {
                   month: "short",
                   day: "numeric",
@@ -39,7 +39,7 @@ export function EntryLog({ tracker, entries }: { tracker: Tracker; entries: Entr
                   minute: "2-digit",
                 })}
               </span>
-              <span className="font-medium">
+              <span className="font-medium" suppressHydrationWarning>
                 {entry.start_time && entry.end_time
                   ? `${formatTime(entry.start_time)}–${formatTime(entry.end_time)} (${entry.value} ${unit})`
                   : `${entry.value} ${unit}`}
