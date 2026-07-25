@@ -108,7 +108,7 @@ export default async function DashboardPage({
   });
 
   return (
-    <div className="max-w-6xl flex flex-col lg:flex-row gap-8 items-start">
+    <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-8 items-start">
       <div className="flex-1 min-w-0 space-y-8">
         <div>
           <h1 className="text-lg font-semibold mb-4">Log an entry</h1>

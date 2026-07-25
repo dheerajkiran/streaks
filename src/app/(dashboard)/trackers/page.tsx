@@ -15,7 +15,7 @@ export default async function TrackersPage() {
   const archived = trackers.filter((t) => t.is_archived);
 
   return (
-    <div className="max-w-lg space-y-8">
+    <div className="max-w-lg mx-auto space-y-8">
       <div>
         <h1 className="text-lg font-semibold mb-4">New tracker</h1>
         <TrackerForm />
