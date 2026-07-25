@@ -3,7 +3,8 @@ import { createClient } from "@/lib/supabase/server";
 import { QuickAddEntry } from "@/components/QuickAddEntry";
 import { TrackerSelect } from "@/components/TrackerSelect";
 import { Heatmap } from "@/components/Heatmap";
-import type { Tracker } from "@/lib/types";
+import { EntryLog } from "@/components/EntryLog";
+import type { Entry, Tracker } from "@/lib/types";
 
 function currentMonthStr() {
   const now = new Date();
@@ -56,6 +57,17 @@ export default async function DashboardPage({
     for (const e of entries ?? []) {
       dailyTotals[e.entry_date] = (dailyTotals[e.entry_date] ?? 0) + Number(e.value);
     }
+  }
+
+  let recentEntries: Entry[] = [];
+  if (selectedTracker) {
+    const { data } = await supabase
+      .from("entries")
+      .select("*")
+      .eq("tracker_id", selectedTracker.id)
+      .order("created_at", { ascending: false })
+      .limit(10);
+    recentEntries = (data ?? []) as Entry[];
   }
 
   const prevMonthStr = shiftMonthStr(monthStr, -1);
@@ -111,6 +123,11 @@ export default async function DashboardPage({
               month={month}
               dailyTotals={dailyTotals}
             />
+
+            <h2 className="text-sm font-medium text-neutral-500 mt-8 mb-2">
+              Recent entries
+            </h2>
+            <EntryLog tracker={selectedTracker} entries={recentEntries} />
           </div>
         )
       )}

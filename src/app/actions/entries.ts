@@ -27,3 +27,10 @@ export async function createEntry(formData: FormData) {
 
   revalidatePath("/");
 }
+
+export async function deleteEntry(entryId: string) {
+  const supabase = await createClient();
+  await supabase.from("entries").delete().eq("id", entryId);
+
+  revalidatePath("/");
+}
