@@ -26,15 +26,19 @@ export function Heatmap({
 
   return (
     <div className="overflow-x-auto">
-      <div className="flex flex-col gap-1 w-fit">
+      <div className="flex flex-col gap-2 w-fit">
         <div className="flex gap-1">
           <div className="w-4 shrink-0" />
           <div className="flex gap-[3px]">
             {weeks.map((week, i) => {
               const label = monthLabels.find((l) => l.weekIndex === i)?.label;
               return (
-                <div key={i} className="relative w-3 shrink-0 text-[10px] text-neutral-400">
-                  {label && <span className="absolute left-0 whitespace-nowrap">{label}</span>}
+                <div key={i} className="relative w-3 h-4 shrink-0 text-[10px] text-neutral-400">
+                  {label && (
+                    <span className="absolute left-0 top-0 leading-4 whitespace-nowrap">
+                      {label}
+                    </span>
+                  )}
                 </div>
               );
             })}
