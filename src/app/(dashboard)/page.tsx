@@ -5,8 +5,9 @@ import { Heatmap } from "@/components/Heatmap";
 import { EntryLog } from "@/components/EntryLog";
 import { TodayPanel } from "@/components/TodayPanel";
 import { DayTimeline } from "@/components/DayTimeline";
+import { TodoList } from "@/components/TodoList";
 import { getTodayInUserTimeZone, getUserTimeZone } from "@/lib/timezone";
-import type { Entry, Tracker } from "@/lib/types";
+import type { Entry, Todo, Tracker } from "@/lib/types";
 
 const PRODUCTIVITY_PSEUDO_TRACKER: Pick<Tracker, "type" | "unit" | "color"> = {
   type: "duration",
@@ -91,6 +92,12 @@ export default async function DashboardPage({
       if (e.start_time) dayLatestTime[e.tracker_id] = e.start_time;
     }
   }
+
+  const { data: todoData } = await supabase
+    .from("todos")
+    .select("*")
+    .order("created_at", { ascending: true });
+  const todos = (todoData ?? []) as Todo[];
 
   const isCurrentYear = selectedYear === currentYear;
   const prevDayStr = shiftDateStr(selectedDay, -1);
@@ -184,6 +191,9 @@ export default async function DashboardPage({
           dayLabel={dayLabel}
           isToday={isToday}
         />
+        <div className="mt-8">
+          <TodoList todos={todos} />
+        </div>
       </div>
     </div>
   );

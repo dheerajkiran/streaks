@@ -28,3 +28,12 @@ export type DailyTotal = {
   date: string;
   total: number;
 };
+
+export type Todo = {
+  id: string;
+  user_id: string;
+  text: string;
+  is_done: boolean;
+  created_at: string;
+  completed_at: string | null;
+};
