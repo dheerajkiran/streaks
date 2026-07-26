@@ -57,6 +57,50 @@ export async function createEntry(formData: FormData) {
   revalidatePath("/");
 }
 
+export async function updateEntry(entryId: string, formData: FormData) {
+  const supabase = await createClient();
+
+  const entryDate = String(formData.get("entry_date") ?? "");
+  const note = String(formData.get("note") ?? "").trim();
+  const logMode = String(formData.get("log_mode") ?? "value");
+
+  if (!entryDate) return { error: "Date is required." };
+
+  let value: number;
+  let startTime: string | null = null;
+  let endTime: string | null = null;
+
+  if (logMode === "range") {
+    startTime = String(formData.get("start_time") ?? "");
+    endTime = String(formData.get("end_time") ?? "");
+    if (!startTime || !endTime) return { error: "Start and end time are required." };
+    value = minutesBetween(startTime, endTime);
+  } else if (logMode === "time") {
+    startTime = String(formData.get("time_value") ?? "");
+    if (!startTime) return { error: "Time is required." };
+    const [h, m] = startTime.split(":").map(Number);
+    value = h * 60 + m;
+  } else {
+    value = Number(formData.get("value"));
+    if (!Number.isFinite(value) || value <= 0) return { error: "Enter a valid value." };
+  }
+
+  const { error } = await supabase
+    .from("entries")
+    .update({
+      value,
+      entry_date: entryDate,
+      note: note || null,
+      start_time: startTime,
+      end_time: endTime,
+    })
+    .eq("id", entryId);
+
+  if (error) return { error: error.message };
+
+  revalidatePath("/");
+}
+
 export async function deleteEntry(entryId: string) {
   const supabase = await createClient();
   await supabase.from("entries").delete().eq("id", entryId);
