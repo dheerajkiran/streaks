@@ -42,30 +42,32 @@ export function EntryLog({
   }
 
   return (
-    <ul className="space-y-1">
-      {entries.map((entry) => {
-        const tracker = trackerById.get(entry.tracker_id);
-        if (!tracker) return null;
+    <div className="max-h-[280px] overflow-y-auto pr-1">
+      <ul className="space-y-1">
+        {entries.map((entry) => {
+          const tracker = trackerById.get(entry.tracker_id);
+          if (!tracker) return null;
 
-        return editingId === entry.id ? (
-          <EntryEditRow
-            key={entry.id}
-            tracker={tracker}
-            entry={entry}
-            onCancel={() => setEditingId(null)}
-            onSaved={() => setEditingId(null)}
-          />
-        ) : (
-          <EntryViewRow
-            key={entry.id}
-            tracker={tracker}
-            entry={entry}
-            tz={tz}
-            onEdit={() => setEditingId(entry.id)}
-          />
-        );
-      })}
-    </ul>
+          return editingId === entry.id ? (
+            <EntryEditRow
+              key={entry.id}
+              tracker={tracker}
+              entry={entry}
+              onCancel={() => setEditingId(null)}
+              onSaved={() => setEditingId(null)}
+            />
+          ) : (
+            <EntryViewRow
+              key={entry.id}
+              tracker={tracker}
+              entry={entry}
+              tz={tz}
+              onEdit={() => setEditingId(entry.id)}
+            />
+          );
+        })}
+      </ul>
+    </div>
   );
 }
 
