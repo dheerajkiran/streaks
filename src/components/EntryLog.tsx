@@ -20,28 +20,34 @@ function initialLogMode(tracker: Tracker, entry: Entry): LogMode {
 }
 
 export function EntryLog({
-  tracker,
+  trackers,
   entries,
   tz,
+  isToday,
 }: {
-  tracker: Tracker;
+  trackers: Tracker[];
   entries: Entry[];
   tz: string;
+  isToday: boolean;
 }) {
   const [editingId, setEditingId] = useState<string | null>(null);
+  const trackerById = new Map(trackers.map((t) => [t.id, t]));
 
   if (entries.length === 0) {
     return (
       <p className="text-sm text-neutral-400">
-        No entries logged for {tracker.name} yet.
+        No entries logged {isToday ? "yet today" : "on this day"}.
       </p>
     );
   }
 
   return (
     <ul className="space-y-1">
-      {entries.map((entry) =>
-        editingId === entry.id ? (
+      {entries.map((entry) => {
+        const tracker = trackerById.get(entry.tracker_id);
+        if (!tracker) return null;
+
+        return editingId === entry.id ? (
           <EntryEditRow
             key={entry.id}
             tracker={tracker}
@@ -57,8 +63,8 @@ export function EntryLog({
             tz={tz}
             onEdit={() => setEditingId(entry.id)}
           />
-        )
-      )}
+        );
+      })}
     </ul>
   );
 }
@@ -80,6 +86,13 @@ function EntryViewRow({
   return (
     <li className="flex items-center justify-between rounded-lg border border-neutral-200 dark:border-neutral-800 px-3 py-2 text-sm">
       <div className="flex items-center gap-3">
+        <span className="flex items-center gap-1.5 text-neutral-500">
+          <span
+            className="h-2 w-2 rounded-full shrink-0"
+            style={{ backgroundColor: tracker.color }}
+          />
+          {tracker.name}
+        </span>
         <span className="text-neutral-400 tabular-nums" suppressHydrationWarning>
           {loggedAt.toLocaleString("en-US", {
             timeZone: tz,
@@ -140,6 +153,13 @@ function EntryEditRow({
 
   return (
     <li className="rounded-lg border border-neutral-200 dark:border-neutral-800 p-3 space-y-2">
+      <span className="flex items-center gap-1.5 text-xs text-neutral-500">
+        <span
+          className="h-2 w-2 rounded-full shrink-0"
+          style={{ backgroundColor: tracker.color }}
+        />
+        {tracker.name}
+      </span>
       <form
         action={async (formData) => {
           const result = await updateEntry(entry.id, formData);
