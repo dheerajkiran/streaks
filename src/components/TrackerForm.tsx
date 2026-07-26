@@ -121,6 +121,11 @@ export function TrackerForm() {
         </div>
       </div>
 
+      <label className="flex items-center gap-2 text-sm">
+        <input type="checkbox" name="is_productive" />
+        Counts toward productivity (work, studying, upskilling)
+      </label>
+
       <button
         type="submit"
         className="rounded-lg bg-neutral-900 dark:bg-neutral-100 text-neutral-50 dark:text-neutral-900 px-3 py-2 text-sm font-medium"

@@ -15,7 +15,7 @@ export function Heatmap({
   year,
   dailyTotals,
 }: {
-  tracker: Tracker;
+  tracker: Pick<Tracker, "type" | "unit" | "color">;
   year: number;
   dailyTotals: Record<string, number>;
 }) {

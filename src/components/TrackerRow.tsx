@@ -17,6 +17,7 @@ export function TrackerRow({ tracker }: { tracker: Tracker }) {
   const [type, setType] = useState<TrackerType>(tracker.type);
   const [unit, setUnit] = useState(tracker.unit ?? "");
   const [color, setColor] = useState(tracker.color);
+  const [isProductive, setIsProductive] = useState(tracker.is_productive);
   const [error, setError] = useState<string | null>(null);
 
   if (!editing) {
@@ -29,6 +30,9 @@ export function TrackerRow({ tracker }: { tracker: Tracker }) {
           />
           <span className="text-sm font-medium">{tracker.name}</span>
           <span className="text-xs text-neutral-400">{typeLabel(tracker)}</span>
+          {tracker.is_productive && (
+            <span className="text-xs text-neutral-400">· productive</span>
+          )}
         </div>
         <div className="flex items-center gap-3 text-xs">
           <button
@@ -141,6 +145,16 @@ export function TrackerRow({ tracker }: { tracker: Tracker }) {
           </div>
         </div>
 
+        <label className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            name="is_productive"
+            checked={isProductive}
+            onChange={(e) => setIsProductive(e.target.checked)}
+          />
+          Counts toward productivity (work, studying, upskilling)
+        </label>
+
         <div className="flex items-center gap-3">
           <button
             type="submit"
@@ -155,6 +169,7 @@ export function TrackerRow({ tracker }: { tracker: Tracker }) {
               setType(tracker.type);
               setUnit(tracker.unit ?? "");
               setColor(tracker.color);
+              setIsProductive(tracker.is_productive);
               setError(null);
               setEditing(false);
             }}

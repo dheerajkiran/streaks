@@ -7,7 +7,13 @@ import { EntryLog } from "@/components/EntryLog";
 import { TodayPanel } from "@/components/TodayPanel";
 import { DayTimeline } from "@/components/DayTimeline";
 import { getTodayInUserTimeZone, getUserTimeZone } from "@/lib/timezone";
-import type { Entry, Tracker } from "@/lib/types";
+import { PRODUCTIVITY_TRACKER_ID, type Entry, type Tracker } from "@/lib/types";
+
+const PRODUCTIVITY_PSEUDO_TRACKER: Pick<Tracker, "type" | "unit" | "color"> = {
+  type: "duration",
+  unit: null,
+  color: "#008300",
+};
 
 function shiftDateStr(dateStr: string, delta: number) {
   const [y, m, d] = dateStr.split("-").map(Number);
@@ -48,13 +54,30 @@ export default async function DashboardPage({
 
   const trackers = (trackerData ?? []) as Tracker[];
   const activeTrackers = trackers.filter((t) => !t.is_archived);
-  const selectedTracker =
-    trackers.find((t) => t.id === params.tracker) ?? activeTrackers[0] ?? trackers[0];
+  const productiveTrackers = trackers.filter((t) => t.is_productive);
+  const isProductivityView = (params.tracker ?? PRODUCTIVITY_TRACKER_ID) === PRODUCTIVITY_TRACKER_ID;
+  const selectedTracker = isProductivityView
+    ? undefined
+    : trackers.find((t) => t.id === params.tracker) ?? activeTrackers[0] ?? trackers[0];
 
   const selectedYear = Number(params.year) || currentYear;
 
   const dailyTotals: Record<string, number> = {};
-  if (selectedTracker) {
+  if (isProductivityView) {
+    const productiveIds = productiveTrackers.map((t) => t.id);
+    if (productiveIds.length > 0) {
+      const { data: entries } = await supabase
+        .from("entries")
+        .select("entry_date, value")
+        .in("tracker_id", productiveIds)
+        .gte("entry_date", `${selectedYear}-01-01`)
+        .lte("entry_date", `${selectedYear}-12-31`);
+
+      for (const e of entries ?? []) {
+        dailyTotals[e.entry_date] = (dailyTotals[e.entry_date] ?? 0) + Number(e.value);
+      }
+    }
+  } else if (selectedTracker) {
     const { data: entries } = await supabase
       .from("entries")
       .select("entry_date, value")
@@ -151,18 +174,21 @@ export default async function DashboardPage({
             page to see your heatmap.
           </p>
         ) : (
-          selectedTracker && (
+          (isProductivityView || selectedTracker) && (
             <div>
               <div className="flex items-center justify-between mb-4 gap-4">
                 <TrackerSelect
                   trackers={trackers}
-                  selectedId={selectedTracker.id}
+                  selectedId={isProductivityView ? PRODUCTIVITY_TRACKER_ID : selectedTracker!.id}
                   year={String(selectedYear)}
                   day={params.day}
                 />
                 <div className="flex items-center gap-3 text-sm">
                   <Link
-                    href={buildHref({ tracker: selectedTracker.id, year: String(selectedYear - 1) })}
+                    href={buildHref({
+                      tracker: isProductivityView ? undefined : selectedTracker!.id,
+                      year: String(selectedYear - 1),
+                    })}
                   >
                     ‹
                   </Link>
@@ -172,7 +198,7 @@ export default async function DashboardPage({
                   ) : (
                     <Link
                       href={buildHref({
-                        tracker: selectedTracker.id,
+                        tracker: isProductivityView ? undefined : selectedTracker!.id,
                         year: String(selectedYear + 1),
                       })}
                     >
@@ -181,12 +207,31 @@ export default async function DashboardPage({
                   )}
                 </div>
               </div>
-              <Heatmap tracker={selectedTracker} year={selectedYear} dailyTotals={dailyTotals} />
 
-              <h2 className="text-sm font-medium text-neutral-500 mt-8 mb-2">
-                Recent entries
-              </h2>
-              <EntryLog tracker={selectedTracker} entries={recentEntries} tz={tz} />
+              {isProductivityView && productiveTrackers.length === 0 ? (
+                <p className="text-sm text-neutral-400">
+                  No trackers are marked as productive yet. Edit a tracker on the{" "}
+                  <Link href="/trackers" className="underline">
+                    Trackers
+                  </Link>{" "}
+                  page and check &ldquo;counts toward productivity&rdquo; to see it here.
+                </p>
+              ) : (
+                <Heatmap
+                  tracker={isProductivityView ? PRODUCTIVITY_PSEUDO_TRACKER : selectedTracker!}
+                  year={selectedYear}
+                  dailyTotals={dailyTotals}
+                />
+              )}
+
+              {selectedTracker && (
+                <>
+                  <h2 className="text-sm font-medium text-neutral-500 mt-8 mb-2">
+                    Recent entries
+                  </h2>
+                  <EntryLog tracker={selectedTracker} entries={recentEntries} tz={tz} />
+                </>
+              )}
             </div>
           )
         )}

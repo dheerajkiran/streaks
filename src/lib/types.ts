@@ -1,5 +1,8 @@
 export type TrackerType = "duration" | "quantity" | "time";
 
+/** Sentinel value for the aggregate "Productivity" heatmap view, not a real tracker id. */
+export const PRODUCTIVITY_TRACKER_ID = "__productivity__";
+
 export type Tracker = {
   id: string;
   user_id: string;
@@ -8,6 +11,7 @@ export type Tracker = {
   unit: string | null;
   color: string;
   is_archived: boolean;
+  is_productive: boolean;
   created_at: string;
 };
 

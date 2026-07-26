@@ -15,6 +15,7 @@ export async function createTracker(formData: FormData) {
   const type = String(formData.get("type") ?? "") as TrackerType;
   const unit = String(formData.get("unit") ?? "").trim();
   const color = String(formData.get("color") ?? "#22c55e");
+  const isProductive = formData.get("is_productive") === "on";
 
   if (!name) return { error: "Name is required." };
   if (type !== "duration" && type !== "quantity" && type !== "time") {
@@ -27,6 +28,7 @@ export async function createTracker(formData: FormData) {
     type,
     unit: type === "quantity" ? unit || "count" : type === "duration" ? "minutes" : null,
     color,
+    is_productive: isProductive,
   });
 
   if (error) return { error: error.message };
@@ -42,6 +44,7 @@ export async function updateTracker(trackerId: string, formData: FormData) {
   const type = String(formData.get("type") ?? "") as TrackerType;
   const unit = String(formData.get("unit") ?? "").trim();
   const color = String(formData.get("color") ?? "#22c55e");
+  const isProductive = formData.get("is_productive") === "on";
 
   if (!name) return { error: "Name is required." };
   if (type !== "duration" && type !== "quantity" && type !== "time") {
@@ -55,6 +58,7 @@ export async function updateTracker(trackerId: string, formData: FormData) {
       type,
       unit: type === "quantity" ? unit || "count" : type === "duration" ? "minutes" : null,
       color,
+      is_productive: isProductive,
     })
     .eq("id", trackerId);
 
