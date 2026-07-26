@@ -20,12 +20,14 @@ export function TodayPanel({
   trackers,
   totals,
   latestTimes,
-  todayLabel,
+  dayLabel,
+  isToday,
 }: {
   trackers: Tracker[];
   totals: Record<string, number>;
   latestTimes: Record<string, string>;
-  todayLabel: string;
+  dayLabel: string;
+  isToday: boolean;
 }) {
   const durationTrackers = trackers.filter((t) => t.type === "duration");
   const quantityTrackers = trackers.filter((t) => t.type === "quantity");
@@ -40,9 +42,11 @@ export function TodayPanel({
   if (trackers.length === 0) {
     return (
       <div className="rounded-xl border border-neutral-200 dark:border-neutral-800 p-4">
-        <h2 className="text-sm font-medium text-neutral-500">Today</h2>
+        <h2 className="text-sm font-medium text-neutral-500">
+          {isToday ? "Today" : dayLabel}
+        </h2>
         <p className="text-sm text-neutral-400 mt-2">
-          Create a tracker to see today&rsquo;s progress here.
+          Create a tracker to see this day&rsquo;s progress here.
         </p>
       </div>
     );
@@ -51,14 +55,18 @@ export function TodayPanel({
   return (
     <div className="rounded-xl border border-neutral-200 dark:border-neutral-800 p-4 space-y-6">
       <div>
-        <h2 className="text-sm font-medium text-neutral-500">Today</h2>
-        <p className="text-xs text-neutral-400">{todayLabel}</p>
+        <h2 className="text-sm font-medium text-neutral-500">
+          {isToday ? "Today" : dayLabel}
+        </h2>
+        {isToday && <p className="text-xs text-neutral-400">{dayLabel}</p>}
       </div>
 
       {durationTrackers.length > 0 && (
         <div>
           <div className="text-2xl font-semibold">{formatDuration(totalMinutesToday)}</div>
-          <p className="text-xs text-neutral-400 mb-4">tracked today</p>
+          <p className="text-xs text-neutral-400 mb-4">
+            tracked {isToday ? "today" : "this day"}
+          </p>
 
           <ul className="space-y-3">
             {[...durationTrackers]
@@ -96,7 +104,9 @@ export function TodayPanel({
 
       {(quantityTrackers.length > 0 || timeTrackers.length > 0) && (
         <div>
-          <p className="text-xs text-neutral-400 mb-2">Also today</p>
+          <p className="text-xs text-neutral-400 mb-2">
+            Also {isToday ? "today" : "this day"}
+          </p>
           <div className="grid grid-cols-2 gap-2">
             {quantityTrackers.map((tracker) => (
               <div

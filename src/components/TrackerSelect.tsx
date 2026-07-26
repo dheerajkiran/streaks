@@ -6,14 +6,17 @@ export function TrackerSelect({
   trackers,
   selectedId,
   month,
+  day,
 }: {
   trackers: Tracker[];
   selectedId: string;
   month: string;
+  day?: string;
 }) {
   return (
     <form method="get">
       <input type="hidden" name="month" value={month} />
+      {day && <input type="hidden" name="day" value={day} />}
       <select
         name="tracker"
         defaultValue={selectedId}

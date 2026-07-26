@@ -22,16 +22,37 @@ function shiftMonthStr(monthStr: string, delta: number) {
   return `${shifted.getUTCFullYear()}-${String(shifted.getUTCMonth() + 1).padStart(2, "0")}`;
 }
 
+function shiftDateStr(dateStr: string, delta: number) {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const shifted = new Date(Date.UTC(y, m - 1, d + delta));
+  return shifted.toISOString().slice(0, 10);
+}
+
 export default async function DashboardPage({
   searchParams,
 }: {
-  searchParams: Promise<{ tracker?: string; month?: string }>;
+  searchParams: Promise<{ tracker?: string; month?: string; day?: string }>;
 }) {
   const params = await searchParams;
   const supabase = await createClient();
 
   const [tz, todayStr] = await Promise.all([getUserTimeZone(), getTodayInUserTimeZone()]);
   const currentMonthStr = todayStr.slice(0, 7);
+
+  const selectedDay = params.day ?? todayStr;
+  const isToday = selectedDay === todayStr;
+
+  function buildHref(overrides: Record<string, string | undefined>) {
+    const sp = new URLSearchParams();
+    if (params.tracker) sp.set("tracker", params.tracker);
+    if (params.month) sp.set("month", params.month);
+    if (params.day) sp.set("day", params.day);
+    for (const [key, value] of Object.entries(overrides)) {
+      if (value === undefined) sp.delete(key);
+      else sp.set(key, value);
+    }
+    return `/?${sp.toString()}`;
+  }
 
   const { data: trackerData } = await supabase
     .from("trackers")
@@ -60,9 +81,9 @@ export default async function DashboardPage({
     }
   }
 
-  const todayTotals: Record<string, number> = {};
-  const todayLatestTime: Record<string, string> = {};
-  let todayEntries: Entry[] = [];
+  const dayTotals: Record<string, number> = {};
+  const dayLatestTime: Record<string, string> = {};
+  let dayEntries: Entry[] = [];
   if (activeTrackers.length > 0) {
     const { data } = await supabase
       .from("entries")
@@ -71,13 +92,13 @@ export default async function DashboardPage({
         "tracker_id",
         activeTrackers.map((t) => t.id)
       )
-      .eq("entry_date", todayStr)
+      .eq("entry_date", selectedDay)
       .order("created_at", { ascending: true });
 
-    todayEntries = (data ?? []) as Entry[];
-    for (const e of todayEntries) {
-      todayTotals[e.tracker_id] = (todayTotals[e.tracker_id] ?? 0) + Number(e.value);
-      if (e.start_time) todayLatestTime[e.tracker_id] = e.start_time;
+    dayEntries = (data ?? []) as Entry[];
+    for (const e of dayEntries) {
+      dayTotals[e.tracker_id] = (dayTotals[e.tracker_id] ?? 0) + Number(e.value);
+      if (e.start_time) dayLatestTime[e.tracker_id] = e.start_time;
     }
   }
 
@@ -95,12 +116,15 @@ export default async function DashboardPage({
   const prevMonthStr = shiftMonthStr(monthStr, -1);
   const nextMonthStr = shiftMonthStr(monthStr, 1);
   const isCurrentMonth = monthStr === currentMonthStr;
-  const todayLabel = new Intl.DateTimeFormat("en-US", {
-    timeZone: tz,
+  const prevDayStr = shiftDateStr(selectedDay, -1);
+  const nextDayStr = shiftDateStr(selectedDay, 1);
+  const [dayY, dayM, dayD] = selectedDay.split("-").map(Number);
+  const dayLabel = new Date(Date.UTC(dayY, dayM - 1, dayD)).toLocaleDateString("en-US", {
     weekday: "long",
     month: "short",
     day: "numeric",
-  }).format(new Date());
+    timeZone: "UTC",
+  });
   const monthLabel = start.toLocaleDateString("en-US", {
     month: "long",
     year: "numeric",
@@ -116,7 +140,27 @@ export default async function DashboardPage({
         </div>
 
         {activeTrackers.length > 0 && (
-          <DayTimeline trackers={activeTrackers} entries={todayEntries} />
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium text-neutral-500">
+                {isToday ? "Today" : dayLabel}
+              </span>
+              <div className="flex items-center gap-3 text-sm">
+                <Link href={buildHref({ day: prevDayStr })}>‹</Link>
+                {!isToday && (
+                  <Link href={buildHref({ day: undefined })} className="text-xs underline">
+                    Today
+                  </Link>
+                )}
+                {isToday ? (
+                  <span className="text-neutral-300">›</span>
+                ) : (
+                  <Link href={buildHref({ day: nextDayStr })}>›</Link>
+                )}
+              </div>
+            </div>
+            <DayTimeline trackers={activeTrackers} entries={dayEntries} isToday={isToday} />
+          </div>
         )}
 
         {trackers.length === 0 ? (
@@ -135,16 +179,17 @@ export default async function DashboardPage({
                   trackers={trackers}
                   selectedId={selectedTracker.id}
                   month={monthStr}
+                  day={params.day}
                 />
                 <div className="flex items-center gap-3 text-sm">
-                  <Link href={`/?tracker=${selectedTracker.id}&month=${prevMonthStr}`}>
+                  <Link href={buildHref({ tracker: selectedTracker.id, month: prevMonthStr })}>
                     ‹
                   </Link>
                   <span className="w-32 text-center">{monthLabel}</span>
                   {isCurrentMonth ? (
                     <span className="text-neutral-300">›</span>
                   ) : (
-                    <Link href={`/?tracker=${selectedTracker.id}&month=${nextMonthStr}`}>
+                    <Link href={buildHref({ tracker: selectedTracker.id, month: nextMonthStr })}>
                       ›
                     </Link>
                   )}
@@ -169,9 +214,10 @@ export default async function DashboardPage({
       <div className="w-full lg:w-72 shrink-0">
         <TodayPanel
           trackers={activeTrackers}
-          totals={todayTotals}
-          latestTimes={todayLatestTime}
-          todayLabel={todayLabel}
+          totals={dayTotals}
+          latestTimes={dayLatestTime}
+          dayLabel={dayLabel}
+          isToday={isToday}
         />
       </div>
     </div>

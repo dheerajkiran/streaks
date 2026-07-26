@@ -8,7 +8,15 @@ function formatClock(time: string) {
   return date.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
 }
 
-export function DayTimeline({ trackers, entries }: { trackers: Tracker[]; entries: Entry[] }) {
+export function DayTimeline({
+  trackers,
+  entries,
+  isToday,
+}: {
+  trackers: Tracker[];
+  entries: Entry[];
+  isToday: boolean;
+}) {
   const trackerById = new Map(trackers.map((t) => [t.id, t]));
 
   const blocks = entries
@@ -34,10 +42,10 @@ export function DayTimeline({ trackers, entries }: { trackers: Tracker[]; entrie
   if (blocks.length === 0 && markers.length === 0) {
     return (
       <div className="rounded-xl border border-neutral-200 dark:border-neutral-800 p-4">
-        <h2 className="text-sm font-medium text-neutral-500 mb-1">Today&rsquo;s timeline</h2>
+        <h2 className="text-sm font-medium text-neutral-500 mb-1">Timeline</h2>
         <p className="text-sm text-neutral-400">
-          No timed activity yet. Log a duration as a start&ndash;end time (or a
-          time-of-day tracker) to see it here.
+          No timed activity {isToday ? "yet" : "on this day"}. Log a duration as a
+          start&ndash;end time (or a time-of-day tracker) to see it here.
         </p>
       </div>
     );
@@ -45,7 +53,7 @@ export function DayTimeline({ trackers, entries }: { trackers: Tracker[]; entrie
 
   return (
     <div className="rounded-xl border border-neutral-200 dark:border-neutral-800 p-4">
-      <h2 className="text-sm font-medium text-neutral-500 mb-4">Today&rsquo;s timeline</h2>
+      <h2 className="text-sm font-medium text-neutral-500 mb-4">Timeline</h2>
 
       <div className="relative h-8 rounded-lg bg-neutral-100 dark:bg-neutral-800 overflow-hidden">
         {HOUR_MARKS.slice(1, -1).map((hour) => (
