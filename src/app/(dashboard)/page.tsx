@@ -6,17 +6,8 @@ import { Heatmap } from "@/components/Heatmap";
 import { EntryLog } from "@/components/EntryLog";
 import { TodayPanel } from "@/components/TodayPanel";
 import { DayTimeline } from "@/components/DayTimeline";
+import { getTodayInUserTimeZone, getUserTimeZone } from "@/lib/timezone";
 import type { Entry, Tracker } from "@/lib/types";
-
-function currentMonthStr() {
-  const now = new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-}
-
-function todayStr() {
-  const now = new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
-}
 
 function monthBounds(monthStr: string) {
   const [year, month] = monthStr.split("-").map(Number);
@@ -39,6 +30,9 @@ export default async function DashboardPage({
   const params = await searchParams;
   const supabase = await createClient();
 
+  const [tz, todayStr] = await Promise.all([getUserTimeZone(), getTodayInUserTimeZone()]);
+  const currentMonthStr = todayStr.slice(0, 7);
+
   const { data: trackerData } = await supabase
     .from("trackers")
     .select("*")
@@ -49,7 +43,7 @@ export default async function DashboardPage({
   const selectedTracker =
     trackers.find((t) => t.id === params.tracker) ?? activeTrackers[0] ?? trackers[0];
 
-  const monthStr = params.month ?? currentMonthStr();
+  const monthStr = params.month ?? currentMonthStr;
   const { start, end, year, month } = monthBounds(monthStr);
 
   const dailyTotals: Record<string, number> = {};
@@ -77,7 +71,7 @@ export default async function DashboardPage({
         "tracker_id",
         activeTrackers.map((t) => t.id)
       )
-      .eq("entry_date", todayStr())
+      .eq("entry_date", todayStr)
       .order("created_at", { ascending: true });
 
     todayEntries = (data ?? []) as Entry[];
@@ -100,7 +94,13 @@ export default async function DashboardPage({
 
   const prevMonthStr = shiftMonthStr(monthStr, -1);
   const nextMonthStr = shiftMonthStr(monthStr, 1);
-  const isCurrentMonth = monthStr === currentMonthStr();
+  const isCurrentMonth = monthStr === currentMonthStr;
+  const todayLabel = new Intl.DateTimeFormat("en-US", {
+    timeZone: tz,
+    weekday: "long",
+    month: "short",
+    day: "numeric",
+  }).format(new Date());
   const monthLabel = start.toLocaleDateString("en-US", {
     month: "long",
     year: "numeric",
@@ -171,6 +171,7 @@ export default async function DashboardPage({
           trackers={activeTrackers}
           totals={todayTotals}
           latestTimes={todayLatestTime}
+          todayLabel={todayLabel}
         />
       </div>
     </div>

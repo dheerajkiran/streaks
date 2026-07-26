@@ -20,10 +20,12 @@ export function TodayPanel({
   trackers,
   totals,
   latestTimes,
+  todayLabel,
 }: {
   trackers: Tracker[];
   totals: Record<string, number>;
   latestTimes: Record<string, string>;
+  todayLabel: string;
 }) {
   const durationTrackers = trackers.filter((t) => t.type === "duration");
   const quantityTrackers = trackers.filter((t) => t.type === "quantity");
@@ -34,12 +36,6 @@ export function TodayPanel({
     0
   );
   const maxDuration = Math.max(1, ...durationTrackers.map((t) => totals[t.id] ?? 0));
-
-  const todayLabel = new Date().toLocaleDateString(undefined, {
-    weekday: "long",
-    month: "short",
-    day: "numeric",
-  });
 
   if (trackers.length === 0) {
     return (
