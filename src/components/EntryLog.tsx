@@ -10,7 +10,15 @@ function formatTime(time: string) {
   return date.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
 }
 
-export function EntryLog({ tracker, entries }: { tracker: Tracker; entries: Entry[] }) {
+export function EntryLog({
+  tracker,
+  entries,
+  tz,
+}: {
+  tracker: Tracker;
+  entries: Entry[];
+  tz: string;
+}) {
   const unit = tracker.type === "duration" ? "min" : tracker.unit ?? "";
 
   if (entries.length === 0) {
@@ -32,7 +40,8 @@ export function EntryLog({ tracker, entries }: { tracker: Tracker; entries: Entr
           >
             <div className="flex items-center gap-3">
               <span className="text-neutral-400 tabular-nums" suppressHydrationWarning>
-                {loggedAt.toLocaleString(undefined, {
+                {loggedAt.toLocaleString("en-US", {
+                  timeZone: tz,
                   month: "short",
                   day: "numeric",
                   hour: "numeric",

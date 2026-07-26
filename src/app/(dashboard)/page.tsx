@@ -160,7 +160,7 @@ export default async function DashboardPage({
               <h2 className="text-sm font-medium text-neutral-500 mt-8 mb-2">
                 Recent entries
               </h2>
-              <EntryLog tracker={selectedTracker} entries={recentEntries} />
+              <EntryLog tracker={selectedTracker} entries={recentEntries} tz={tz} />
             </div>
           )
         )}
