@@ -5,17 +5,17 @@ import type { Tracker } from "@/lib/types";
 export function TrackerSelect({
   trackers,
   selectedId,
-  month,
+  year,
   day,
 }: {
   trackers: Tracker[];
   selectedId: string;
-  month: string;
+  year: string;
   day?: string;
 }) {
   return (
     <form method="get">
-      <input type="hidden" name="month" value={month} />
+      <input type="hidden" name="year" value={year} />
       {day && <input type="hidden" name="day" value={day} />}
       <select
         name="tracker"

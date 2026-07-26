@@ -18,15 +18,16 @@ export function bucketAlpha(value: number, max: number) {
   return BUCKET_ALPHAS[0];
 }
 
-/** Weeks (Sun-Sat) covering the given month, padded with nulls outside the month. */
-export function monthWeeks(year: number, month: number): (Date | null)[][] {
-  const firstDay = new Date(Date.UTC(year, month - 1, 1));
-  const lastDay = new Date(Date.UTC(year, month, 0));
+/** Weeks (Sun-Sat) covering the given calendar year, padded with nulls outside it. */
+export function yearWeeks(year: number): (Date | null)[][] {
+  const firstDay = new Date(Date.UTC(year, 0, 1));
+  const lastDay = new Date(Date.UTC(year, 11, 31));
+  const totalDays = Math.round((lastDay.getTime() - firstDay.getTime()) / 86_400_000) + 1;
   const days: (Date | null)[] = [];
 
   for (let i = 0; i < firstDay.getUTCDay(); i++) days.push(null);
-  for (let d = 1; d <= lastDay.getUTCDate(); d++) {
-    days.push(new Date(Date.UTC(year, month - 1, d)));
+  for (let d = 0; d < totalDays; d++) {
+    days.push(new Date(Date.UTC(year, 0, 1 + d)));
   }
   while (days.length % 7 !== 0) days.push(null);
 
@@ -35,6 +36,27 @@ export function monthWeeks(year: number, month: number): (Date | null)[][] {
     weeks.push(days.slice(i, i + 7));
   }
   return weeks;
+}
+
+/** Which week-column index each month's label should sit above. */
+export function monthLabelsForWeeks(weeks: (Date | null)[][]) {
+  const labels: { weekIndex: number; label: string }[] = [];
+  let lastMonth = -1;
+
+  weeks.forEach((week, i) => {
+    const firstDate = week.find((d): d is Date => d !== null);
+    if (!firstDate) return;
+    const monthIndex = firstDate.getUTCMonth();
+    if (monthIndex !== lastMonth) {
+      labels.push({
+        weekIndex: i,
+        label: firstDate.toLocaleDateString("en-US", { month: "short", timeZone: "UTC" }),
+      });
+      lastMonth = monthIndex;
+    }
+  });
+
+  return labels;
 }
 
 export function toDateKey(date: Date) {

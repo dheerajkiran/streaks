@@ -9,19 +9,6 @@ import { DayTimeline } from "@/components/DayTimeline";
 import { getTodayInUserTimeZone, getUserTimeZone } from "@/lib/timezone";
 import type { Entry, Tracker } from "@/lib/types";
 
-function monthBounds(monthStr: string) {
-  const [year, month] = monthStr.split("-").map(Number);
-  const start = new Date(Date.UTC(year, month - 1, 1));
-  const end = new Date(Date.UTC(year, month, 0));
-  return { start, end, year, month };
-}
-
-function shiftMonthStr(monthStr: string, delta: number) {
-  const { year, month } = monthBounds(monthStr);
-  const shifted = new Date(Date.UTC(year, month - 1 + delta, 1));
-  return `${shifted.getUTCFullYear()}-${String(shifted.getUTCMonth() + 1).padStart(2, "0")}`;
-}
-
 function shiftDateStr(dateStr: string, delta: number) {
   const [y, m, d] = dateStr.split("-").map(Number);
   const shifted = new Date(Date.UTC(y, m - 1, d + delta));
@@ -31,13 +18,13 @@ function shiftDateStr(dateStr: string, delta: number) {
 export default async function DashboardPage({
   searchParams,
 }: {
-  searchParams: Promise<{ tracker?: string; month?: string; day?: string }>;
+  searchParams: Promise<{ tracker?: string; year?: string; day?: string }>;
 }) {
   const params = await searchParams;
   const supabase = await createClient();
 
   const [tz, todayStr] = await Promise.all([getUserTimeZone(), getTodayInUserTimeZone()]);
-  const currentMonthStr = todayStr.slice(0, 7);
+  const currentYear = Number(todayStr.slice(0, 4));
 
   const selectedDay = params.day ?? todayStr;
   const isToday = selectedDay === todayStr;
@@ -45,7 +32,7 @@ export default async function DashboardPage({
   function buildHref(overrides: Record<string, string | undefined>) {
     const sp = new URLSearchParams();
     if (params.tracker) sp.set("tracker", params.tracker);
-    if (params.month) sp.set("month", params.month);
+    if (params.year) sp.set("year", params.year);
     if (params.day) sp.set("day", params.day);
     for (const [key, value] of Object.entries(overrides)) {
       if (value === undefined) sp.delete(key);
@@ -64,8 +51,7 @@ export default async function DashboardPage({
   const selectedTracker =
     trackers.find((t) => t.id === params.tracker) ?? activeTrackers[0] ?? trackers[0];
 
-  const monthStr = params.month ?? currentMonthStr;
-  const { start, end, year, month } = monthBounds(monthStr);
+  const selectedYear = Number(params.year) || currentYear;
 
   const dailyTotals: Record<string, number> = {};
   if (selectedTracker) {
@@ -73,8 +59,8 @@ export default async function DashboardPage({
       .from("entries")
       .select("entry_date, value")
       .eq("tracker_id", selectedTracker.id)
-      .gte("entry_date", start.toISOString().slice(0, 10))
-      .lte("entry_date", end.toISOString().slice(0, 10));
+      .gte("entry_date", `${selectedYear}-01-01`)
+      .lte("entry_date", `${selectedYear}-12-31`);
 
     for (const e of entries ?? []) {
       dailyTotals[e.entry_date] = (dailyTotals[e.entry_date] ?? 0) + Number(e.value);
@@ -113,9 +99,7 @@ export default async function DashboardPage({
     recentEntries = (data ?? []) as Entry[];
   }
 
-  const prevMonthStr = shiftMonthStr(monthStr, -1);
-  const nextMonthStr = shiftMonthStr(monthStr, 1);
-  const isCurrentMonth = monthStr === currentMonthStr;
+  const isCurrentYear = selectedYear === currentYear;
   const prevDayStr = shiftDateStr(selectedDay, -1);
   const nextDayStr = shiftDateStr(selectedDay, 1);
   const [dayY, dayM, dayD] = selectedDay.split("-").map(Number);
@@ -123,11 +107,6 @@ export default async function DashboardPage({
     weekday: "long",
     month: "short",
     day: "numeric",
-    timeZone: "UTC",
-  });
-  const monthLabel = start.toLocaleDateString("en-US", {
-    month: "long",
-    year: "numeric",
     timeZone: "UTC",
   });
 
@@ -178,29 +157,31 @@ export default async function DashboardPage({
                 <TrackerSelect
                   trackers={trackers}
                   selectedId={selectedTracker.id}
-                  month={monthStr}
+                  year={String(selectedYear)}
                   day={params.day}
                 />
                 <div className="flex items-center gap-3 text-sm">
-                  <Link href={buildHref({ tracker: selectedTracker.id, month: prevMonthStr })}>
+                  <Link
+                    href={buildHref({ tracker: selectedTracker.id, year: String(selectedYear - 1) })}
+                  >
                     ‹
                   </Link>
-                  <span className="w-32 text-center">{monthLabel}</span>
-                  {isCurrentMonth ? (
+                  <span className="w-16 text-center">{selectedYear}</span>
+                  {isCurrentYear ? (
                     <span className="text-neutral-300">›</span>
                   ) : (
-                    <Link href={buildHref({ tracker: selectedTracker.id, month: nextMonthStr })}>
+                    <Link
+                      href={buildHref({
+                        tracker: selectedTracker.id,
+                        year: String(selectedYear + 1),
+                      })}
+                    >
                       ›
                     </Link>
                   )}
                 </div>
               </div>
-              <Heatmap
-                tracker={selectedTracker}
-                year={year}
-                month={month}
-                dailyTotals={dailyTotals}
-              />
+              <Heatmap tracker={selectedTracker} year={selectedYear} dailyTotals={dailyTotals} />
 
               <h2 className="text-sm font-medium text-neutral-500 mt-8 mb-2">
                 Recent entries
