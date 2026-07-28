@@ -86,16 +86,16 @@ function EntryViewRow({
   const loggedAt = new Date(entry.created_at);
 
   return (
-    <li className="flex items-center justify-between rounded-lg border border-neutral-200 dark:border-neutral-800 px-3 py-2 text-sm">
-      <div className="flex items-center gap-3">
-        <span className="flex items-center gap-1.5 text-neutral-500">
+    <li className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 rounded-lg border border-neutral-200 dark:border-neutral-800 px-3 py-2 text-sm">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 min-w-0">
+        <span className="flex items-center gap-1.5 text-neutral-500 shrink-0">
           <span
             className="h-2 w-2 rounded-full shrink-0"
             style={{ backgroundColor: tracker.color }}
           />
           {tracker.name}
         </span>
-        <span className="text-neutral-400 tabular-nums" suppressHydrationWarning>
+        <span className="text-neutral-400 tabular-nums shrink-0" suppressHydrationWarning>
           {loggedAt.toLocaleString("en-US", {
             timeZone: tz,
             month: "short",
@@ -104,16 +104,18 @@ function EntryViewRow({
             minute: "2-digit",
           })}
         </span>
-        <span className="font-medium" suppressHydrationWarning>
+        <span className="font-medium shrink-0" suppressHydrationWarning>
           {tracker.type === "time" && entry.start_time
             ? formatTime(entry.start_time)
             : entry.start_time && entry.end_time
             ? `${formatTime(entry.start_time)}–${formatTime(entry.end_time)} (${entry.value} ${unit})`
             : `${entry.value} ${unit}`}
         </span>
-        {entry.note && <span className="text-neutral-400">{entry.note}</span>}
+        {entry.note && (
+          <span className="text-neutral-400 truncate min-w-0">{entry.note}</span>
+        )}
       </div>
-      <div className="flex items-center gap-3 text-xs">
+      <div className="flex items-center gap-3 text-xs shrink-0">
         <button
           type="button"
           onClick={onEdit}

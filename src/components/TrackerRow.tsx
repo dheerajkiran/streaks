@@ -22,19 +22,19 @@ export function TrackerRow({ tracker }: { tracker: Tracker }) {
 
   if (!editing) {
     return (
-      <li className="flex items-center justify-between rounded-lg border border-neutral-200 dark:border-neutral-800 px-3 py-2">
-        <div className="flex items-center gap-2">
+      <li className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 rounded-lg border border-neutral-200 dark:border-neutral-800 px-3 py-2">
+        <div className="flex items-center gap-2 min-w-0">
           <span
             className="h-3 w-3 rounded-full shrink-0"
             style={{ backgroundColor: tracker.color }}
           />
-          <span className="text-sm font-medium">{tracker.name}</span>
-          <span className="text-xs text-neutral-400">{typeLabel(tracker)}</span>
+          <span className="text-sm font-medium truncate">{tracker.name}</span>
+          <span className="text-xs text-neutral-400 shrink-0">{typeLabel(tracker)}</span>
           {tracker.is_productive && (
-            <span className="text-xs text-neutral-400">· productive</span>
+            <span className="text-xs text-neutral-400 shrink-0">· productive</span>
           )}
         </div>
-        <div className="flex items-center gap-3 text-xs">
+        <div className="flex items-center gap-3 text-xs shrink-0">
           <button
             type="button"
             onClick={() => setEditing(true)}
