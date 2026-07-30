@@ -1,13 +1,36 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { createTodo, deleteTodo, setTodoDone, updateTodoText } from "@/app/actions/todos";
-import type { Todo } from "@/lib/types";
+import { createTodo, deleteTodo, setTodoDone, updateTodo } from "@/app/actions/todos";
+import type { Todo, TodoPriority } from "@/lib/types";
+
+const PRIORITY: Record<TodoPriority, { label: string; color: string }> = {
+  high: { label: "High", color: "#e34948" },
+  medium: { label: "Medium", color: "#eb6834" },
+  low: { label: "Low", color: "#2a78d6" },
+};
+
+const PRIORITY_RANK: Record<TodoPriority, number> = { high: 3, medium: 2, low: 1 };
+
+function sortTodos(todos: Todo[]) {
+  return [...todos].sort((a, b) => {
+    const rankDiff = (b.priority ? PRIORITY_RANK[b.priority] : 0) - (a.priority ? PRIORITY_RANK[a.priority] : 0);
+    if (rankDiff !== 0) return rankDiff;
+    if (a.due_date && b.due_date) return a.due_date.localeCompare(b.due_date);
+    if (a.due_date) return -1;
+    if (b.due_date) return 1;
+    return a.created_at.localeCompare(b.created_at);
+  });
+}
+
+function todayISO() {
+  return new Date().toISOString().slice(0, 10);
+}
 
 export function TodoList({ todos }: { todos: Todo[] }) {
   const formRef = useRef<HTMLFormElement>(null);
-  const open = todos.filter((t) => !t.is_done);
-  const done = todos.filter((t) => t.is_done);
+  const open = sortTodos(todos.filter((t) => !t.is_done));
+  const done = sortTodos(todos.filter((t) => t.is_done));
 
   return (
     <div className="rounded-xl border border-neutral-200 dark:border-neutral-800 p-4 space-y-3">
@@ -54,14 +77,17 @@ export function TodoList({ todos }: { todos: Todo[] }) {
 function TodoRow({ todo }: { todo: Todo }) {
   const [editing, setEditing] = useState(false);
   const [text, setText] = useState(todo.text);
+  const [priority, setPriority] = useState<TodoPriority | "">(todo.priority ?? "");
+  const [category, setCategory] = useState(todo.category ?? "");
+  const [dueDate, setDueDate] = useState(todo.due_date ?? "");
   const [error, setError] = useState<string | null>(null);
 
   if (editing) {
     return (
-      <li>
+      <li className="rounded-lg border border-neutral-200 dark:border-neutral-800 p-2 space-y-2">
         <form
           action={async (formData) => {
-            const result = await updateTodoText(todo.id, formData);
+            const result = await updateTodo(todo.id, formData);
             if (result?.error) {
               setError(result.error);
               return;
@@ -69,7 +95,7 @@ function TodoRow({ todo }: { todo: Todo }) {
             setError(null);
             setEditing(false);
           }}
-          className="flex gap-2"
+          className="space-y-2"
         >
           <input
             name="text"
@@ -77,39 +103,104 @@ function TodoRow({ todo }: { todo: Todo }) {
             onChange={(e) => setText(e.target.value)}
             required
             autoFocus
-            className="flex-1 min-w-0 rounded-lg border border-neutral-300 dark:border-neutral-700 bg-transparent px-2 py-1 text-sm outline-none focus:border-neutral-500"
+            className="w-full rounded-lg border border-neutral-300 dark:border-neutral-700 bg-transparent px-2 py-1 text-sm outline-none focus:border-neutral-500"
           />
-          <button
-            type="submit"
-            className="text-xs text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100"
-          >
-            Save
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setText(todo.text);
-              setError(null);
-              setEditing(false);
-            }}
-            className="text-xs text-neutral-400"
-          >
-            Cancel
-          </button>
+
+          <div className="flex flex-wrap items-center gap-1">
+            <input type="hidden" name="priority" value={priority} />
+            <button
+              type="button"
+              onClick={() => setPriority("")}
+              className={`px-2 py-0.5 rounded-md text-xs border ${
+                priority === ""
+                  ? "border-neutral-500 text-neutral-900 dark:text-neutral-100"
+                  : "border-neutral-300 dark:border-neutral-700 text-neutral-400"
+              }`}
+            >
+              None
+            </button>
+            {(Object.keys(PRIORITY) as TodoPriority[]).map((p) => (
+              <button
+                key={p}
+                type="button"
+                onClick={() => setPriority(p)}
+                className={`flex items-center gap-1 px-2 py-0.5 rounded-md text-xs border ${
+                  priority === p
+                    ? "border-neutral-500 text-neutral-900 dark:text-neutral-100"
+                    : "border-neutral-300 dark:border-neutral-700 text-neutral-400"
+                }`}
+              >
+                <span
+                  className="h-2 w-2 rounded-full shrink-0"
+                  style={{ backgroundColor: PRIORITY[p].color }}
+                />
+                {PRIORITY[p].label}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            <input
+              name="category"
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              placeholder="Category (e.g. Work)"
+              className="flex-1 min-w-[7rem] rounded-lg border border-neutral-300 dark:border-neutral-700 bg-transparent px-2 py-1 text-xs outline-none focus:border-neutral-500"
+            />
+            <input
+              name="due_date"
+              type="date"
+              value={dueDate}
+              onChange={(e) => setDueDate(e.target.value)}
+              className="rounded-lg border border-neutral-300 dark:border-neutral-700 bg-transparent px-2 py-1 text-xs outline-none focus:border-neutral-500"
+            />
+          </div>
+
+          <div className="flex items-center gap-3">
+            <button
+              type="submit"
+              className="text-xs text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100"
+            >
+              Save
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setText(todo.text);
+                setPriority(todo.priority ?? "");
+                setCategory(todo.category ?? "");
+                setDueDate(todo.due_date ?? "");
+                setError(null);
+                setEditing(false);
+              }}
+              className="text-xs text-neutral-400"
+            >
+              Cancel
+            </button>
+          </div>
         </form>
-        {error && <p className="text-xs text-red-600 dark:text-red-400 mt-1">{error}</p>}
+        {error && <p className="text-xs text-red-600 dark:text-red-400">{error}</p>}
       </li>
     );
   }
 
+  const isOverdue = !todo.is_done && !!todo.due_date && todo.due_date < todayISO();
+
   return (
-    <li className="flex items-center gap-2">
+    <li className="flex flex-wrap items-center gap-x-2 gap-y-1">
       <input
         type="checkbox"
         checked={todo.is_done}
         onChange={(e) => setTodoDone(todo.id, e.target.checked)}
         className="shrink-0"
       />
+      {todo.priority && (
+        <span
+          className="h-2 w-2 rounded-full shrink-0"
+          style={{ backgroundColor: PRIORITY[todo.priority].color }}
+          title={`${PRIORITY[todo.priority].label} priority`}
+        />
+      )}
       <span
         className={`flex-1 min-w-0 text-sm truncate ${
           todo.is_done ? "line-through text-neutral-400" : ""
@@ -117,6 +208,24 @@ function TodoRow({ todo }: { todo: Todo }) {
       >
         {todo.text}
       </span>
+      {todo.category && (
+        <span className="shrink-0 rounded bg-neutral-100 dark:bg-neutral-800 px-1.5 py-0.5 text-[10px] text-neutral-500">
+          {todo.category}
+        </span>
+      )}
+      {todo.due_date && (
+        <span
+          className={`shrink-0 text-[10px] ${
+            isOverdue ? "text-red-500" : "text-neutral-400"
+          }`}
+          suppressHydrationWarning
+        >
+          {new Date(todo.due_date + "T00:00:00").toLocaleDateString(undefined, {
+            month: "short",
+            day: "numeric",
+          })}
+        </span>
+      )}
       <button
         type="button"
         onClick={() => setEditing(true)}

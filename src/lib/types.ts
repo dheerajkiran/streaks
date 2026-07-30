@@ -29,11 +29,16 @@ export type DailyTotal = {
   total: number;
 };
 
+export type TodoPriority = "low" | "medium" | "high";
+
 export type Todo = {
   id: string;
   user_id: string;
   text: string;
   is_done: boolean;
+  priority: TodoPriority | null;
+  category: string | null;
+  due_date: string | null;
   created_at: string;
   completed_at: string | null;
 };
