@@ -34,7 +34,7 @@ export function ChatSidebar({ conversations }: { conversations: ChatConversation
               <div key={c.id} className="group relative shrink-0 md:shrink">
                 <Link
                   href={href}
-                  className={`block max-w-[12rem] truncate rounded-lg px-3 py-2 text-sm md:max-w-none md:pr-6 ${
+                  className={`block max-w-[12rem] truncate rounded-lg px-3 py-2 pr-6 text-sm md:max-w-none ${
                     active
                       ? "bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100"
                       : "text-neutral-500 hover:bg-neutral-100 dark:hover:bg-neutral-800 hover:text-neutral-900 dark:hover:text-neutral-100"
@@ -46,7 +46,7 @@ export function ChatSidebar({ conversations }: { conversations: ChatConversation
                   type="button"
                   onClick={() => handleDelete(c.id)}
                   aria-label="Delete chat"
-                  className="absolute right-1 top-1/2 hidden -translate-y-1/2 px-1 text-xs text-neutral-400 hover:text-red-500 md:group-hover:block"
+                  className="absolute right-1 top-1/2 -translate-y-1/2 px-1 text-xs text-neutral-400 hover:text-red-500 md:opacity-0 md:transition-opacity md:group-hover:opacity-100"
                 >
                   ×
                 </button>

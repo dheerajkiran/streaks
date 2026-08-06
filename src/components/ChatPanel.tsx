@@ -70,6 +70,12 @@ export function ChatPanel({
         name="message"
         value={input}
         onChange={(e) => setInput(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" && !pending && input.trim()) {
+            e.preventDefault();
+            formRef.current?.requestSubmit();
+          }
+        }}
         placeholder="How can I help you today?"
         required
         disabled={pending}
