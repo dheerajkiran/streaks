@@ -17,6 +17,11 @@ const dateRangeSchema = {
   additionalProperties: false,
 } as const;
 
+function titleFromMessage(content: string) {
+  const oneLine = content.replace(/\s+/g, " ").trim();
+  return oneLine.length > 60 ? `${oneLine.slice(0, 60)}...` : oneLine;
+}
+
 export async function sendChatMessage(formData: FormData) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
@@ -32,15 +37,27 @@ export async function sendChatMessage(formData: FormData) {
   const content = String(formData.get("message") ?? "").trim();
   if (!content) return { error: "Enter a message." };
 
+  let conversationId = String(formData.get("conversation_id") ?? "").trim() || null;
+
+  if (!conversationId) {
+    const { data: conversation, error: conversationError } = await supabase
+      .from("chat_conversations")
+      .insert({ user_id: user.id, title: titleFromMessage(content) })
+      .select("id")
+      .single();
+    if (conversationError) return { error: conversationError.message };
+    conversationId = conversation.id;
+  }
+
   const { error: insertError } = await supabase
     .from("chat_messages")
-    .insert({ user_id: user.id, role: "user", content });
+    .insert({ user_id: user.id, conversation_id: conversationId, role: "user", content });
   if (insertError) return { error: insertError.message };
 
   const { data: historyData, error: historyError } = await supabase
     .from("chat_messages")
     .select("role, content")
-    .eq("user_id", user.id)
+    .eq("conversation_id", conversationId)
     .order("created_at", { ascending: false })
     .limit(40);
   if (historyError) return { error: historyError.message };
@@ -153,20 +170,23 @@ export async function sendChatMessage(formData: FormData) {
   if (reply) {
     const { error: replyError } = await supabase
       .from("chat_messages")
-      .insert({ user_id: user.id, role: "assistant", content: reply });
+      .insert({ user_id: user.id, conversation_id: conversationId, role: "assistant", content: reply });
     if (replyError) return { error: replyError.message };
   }
 
+  await supabase
+    .from("chat_conversations")
+    .update({ updated_at: new Date().toISOString() })
+    .eq("id", conversationId);
+
   revalidatePath("/");
+  revalidatePath(`/chats/${conversationId}`);
+
+  return { conversationId };
 }
 
-export async function clearChatHistory() {
+export async function deleteConversation(conversationId: string) {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return;
-
-  await supabase.from("chat_messages").delete().eq("user_id", user.id);
+  await supabase.from("chat_conversations").delete().eq("id", conversationId);
   revalidatePath("/");
 }
