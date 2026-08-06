@@ -1,7 +1,8 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { clearChatHistory, sendChatMessage } from "@/app/actions/chat";
+import { useRouter } from "next/navigation";
+import { sendChatMessage } from "@/app/actions/chat";
 import type { ChatMessage } from "@/lib/types";
 
 const SUGGESTIONS = [
@@ -20,7 +21,16 @@ function getGreeting(name: string) {
   return `Up late, ${name}?`;
 }
 
-export function ChatPanel({ messages, name }: { messages: ChatMessage[]; name: string }) {
+export function ChatPanel({
+  messages,
+  name,
+  conversationId,
+}: {
+  messages: ChatMessage[];
+  name: string;
+  conversationId?: string;
+}) {
+  const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
@@ -28,6 +38,7 @@ export function ChatPanel({ messages, name }: { messages: ChatMessage[]; name: s
   const hasMessages = messages.length > 0;
 
   async function submit(formData: FormData) {
+    if (conversationId) formData.set("conversation_id", conversationId);
     setPending(true);
     const result = await sendChatMessage(formData);
     setPending(false);
@@ -38,6 +49,9 @@ export function ChatPanel({ messages, name }: { messages: ChatMessage[]; name: s
     setError(null);
     setInput("");
     formRef.current?.reset();
+    if (!conversationId && result?.conversationId) {
+      router.push(`/chats/${result.conversationId}`);
+    }
   }
 
   async function submitSuggestion(text: string) {
@@ -119,12 +133,6 @@ export function ChatPanel({ messages, name }: { messages: ChatMessage[]; name: s
       {inputBox}
 
       {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
-
-      <form action={clearChatHistory}>
-        <button type="submit" className="text-xs text-neutral-400 hover:text-red-500">
-          Clear history
-        </button>
-      </form>
     </div>
   );
 }
