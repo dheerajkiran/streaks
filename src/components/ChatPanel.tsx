@@ -4,75 +4,130 @@ import { useRef, useState } from "react";
 import { clearChatHistory, sendChatMessage } from "@/app/actions/chat";
 import type { ChatMessage } from "@/lib/types";
 
-export function ChatPanel({ messages }: { messages: ChatMessage[] }) {
+const SUGGESTIONS = [
+  "Where am I spending the most this month?",
+  "How productive was I this week?",
+  "What's overdue on my to-do list?",
+  "Where am I wasting time lately?",
+];
+
+function getGreeting(name: string) {
+  const hour = new Date().getHours();
+  if (hour < 5) return `Up late, ${name}?`;
+  if (hour < 12) return `Good morning, ${name}`;
+  if (hour < 17) return `Good afternoon, ${name}`;
+  if (hour < 21) return `Good evening, ${name}`;
+  return `Up late, ${name}?`;
+}
+
+export function ChatPanel({ messages, name }: { messages: ChatMessage[]; name: string }) {
   const formRef = useRef<HTMLFormElement>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const [input, setInput] = useState("");
+  const hasMessages = messages.length > 0;
 
-  return (
-    <div className="space-y-4">
-      {messages.length === 0 ? (
-        <p className="text-sm text-neutral-400">
-          Ask about your time, spending, or to-dos — e.g. &ldquo;where am I spending the most this
-          month?&rdquo;
-        </p>
-      ) : (
-        <ul className="space-y-3">
-          {messages.map((m) => (
-            <li key={m.id} className="text-sm">
-              <div className="text-xs font-medium text-neutral-400 mb-0.5">
-                {m.role === "user" ? "You" : "Assistant"}
-              </div>
-              <p className="whitespace-pre-wrap">{m.content}</p>
-            </li>
-          ))}
-        </ul>
-      )}
+  async function submit(formData: FormData) {
+    setPending(true);
+    const result = await sendChatMessage(formData);
+    setPending(false);
+    if (result?.error) {
+      setError(result.error);
+      return;
+    }
+    setError(null);
+    setInput("");
+    formRef.current?.reset();
+  }
 
-      <form
-        ref={formRef}
-        action={async (formData) => {
-          setPending(true);
-          const result = await sendChatMessage(formData);
-          setPending(false);
-          if (result?.error) {
-            setError(result.error);
-            return;
-          }
-          setError(null);
-          formRef.current?.reset();
-        }}
-        className="flex items-end gap-3 rounded-xl border border-neutral-200 dark:border-neutral-800 p-4"
-      >
-        <div className="flex-1 min-w-0">
-          <label className="block text-xs font-medium text-neutral-500 mb-1">Message</label>
-          <input
-            name="message"
-            placeholder="Ask something about your data"
-            required
-            disabled={pending}
-            className="w-full rounded-lg border border-neutral-300 dark:border-neutral-700 bg-transparent px-3 py-2 text-sm outline-none focus:border-neutral-500 disabled:opacity-50"
-          />
-        </div>
+  async function submitSuggestion(text: string) {
+    const formData = new FormData();
+    formData.set("message", text);
+    await submit(formData);
+  }
 
+  const inputBox = (
+    <form
+      ref={formRef}
+      action={submit}
+      className="rounded-2xl border border-neutral-200 dark:border-neutral-800 p-3 shadow-sm"
+    >
+      <input
+        name="message"
+        value={input}
+        onChange={(e) => setInput(e.target.value)}
+        placeholder="How can I help you today?"
+        required
+        disabled={pending}
+        className="w-full bg-transparent px-2 py-2 text-base outline-none placeholder:text-neutral-400 disabled:opacity-50"
+      />
+      <div className="flex items-center justify-end px-1">
         <button
           type="submit"
-          disabled={pending}
-          className="rounded-lg bg-neutral-900 dark:bg-neutral-100 text-neutral-50 dark:text-neutral-900 px-3 py-2 text-sm font-medium disabled:opacity-50"
+          disabled={pending || !input.trim()}
+          className="rounded-lg bg-neutral-900 dark:bg-neutral-100 text-neutral-50 dark:text-neutral-900 px-4 py-1.5 text-sm font-medium disabled:opacity-40"
         >
           {pending ? "Thinking..." : "Send"}
         </button>
-      </form>
+      </div>
+    </form>
+  );
+
+  if (!hasMessages) {
+    return (
+      <div className="min-h-[65vh] flex flex-col items-center justify-center gap-8">
+        <h1 className="text-2xl sm:text-3xl font-serif text-center">
+          <span className="text-orange-500 mr-2">✳</span>
+          {getGreeting(name)}
+        </h1>
+
+        <div className="w-full max-w-xl">{inputBox}</div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-xl">
+          {SUGGESTIONS.map((s) => (
+            <button
+              key={s}
+              type="button"
+              disabled={pending}
+              onClick={() => submitSuggestion(s)}
+              className="text-left rounded-xl border border-neutral-200 dark:border-neutral-800 px-4 py-3 text-sm text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100 hover:border-neutral-400 dark:hover:border-neutral-600 disabled:opacity-50"
+            >
+              {s}
+            </button>
+          ))}
+        </div>
+
+        {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <ul className="space-y-4">
+        {messages.map((m) => (
+          <li key={m.id} className={m.role === "user" ? "flex justify-end" : "flex"}>
+            {m.role === "user" ? (
+              <div className="max-w-[80%] rounded-2xl bg-neutral-900 dark:bg-neutral-100 text-neutral-50 dark:text-neutral-900 px-4 py-2 text-sm whitespace-pre-wrap">
+                {m.content}
+              </div>
+            ) : (
+              <div className="max-w-[80%] text-sm whitespace-pre-wrap">{m.content}</div>
+            )}
+          </li>
+        ))}
+        {pending && <li className="text-sm text-neutral-400">Thinking...</li>}
+      </ul>
+
+      {inputBox}
 
       {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
 
-      {messages.length > 0 && (
-        <form action={clearChatHistory}>
-          <button type="submit" className="text-xs text-neutral-400 hover:text-red-500">
-            Clear history
-          </button>
-        </form>
-      )}
+      <form action={clearChatHistory}>
+        <button type="submit" className="text-xs text-neutral-400 hover:text-red-500">
+          Clear history
+        </button>
+      </form>
     </div>
   );
 }
