@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { signOut } from "@/app/actions/auth";
 import { TimezoneSync } from "@/components/TimezoneSync";
+import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
 
 export default async function DashboardLayout({
   children,
@@ -21,6 +22,7 @@ export default async function DashboardLayout({
   return (
     <div className="min-h-screen">
       <TimezoneSync />
+      <ServiceWorkerRegister />
       <header className="border-b border-neutral-200 dark:border-neutral-800 px-6 py-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <nav className="flex items-center gap-4 text-sm font-medium">
