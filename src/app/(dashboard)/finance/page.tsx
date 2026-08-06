@@ -29,7 +29,7 @@ export default async function FinancePage() {
     .reduce((sum, t) => sum + Number(t.amount), 0);
 
   return (
-    <div className="max-w-3xl mx-auto space-y-8">
+    <div className="max-w-6xl mx-auto space-y-8">
       <div>
         <h1 className="text-lg font-semibold mb-4">Finance</h1>
         <FinanceSummary total={total} thisMonth={thisMonth} />
