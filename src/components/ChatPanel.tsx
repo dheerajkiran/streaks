@@ -76,10 +76,7 @@ export function ChatPanel({ messages, name }: { messages: ChatMessage[]; name: s
   if (!hasMessages) {
     return (
       <div className="min-h-[65vh] flex flex-col items-center justify-center gap-8">
-        <h1 className="text-2xl sm:text-3xl font-serif text-center">
-          <span className="text-orange-500 mr-2">✳</span>
-          {getGreeting(name)}
-        </h1>
+        <h1 className="text-2xl sm:text-3xl font-serif text-center">{getGreeting(name)}</h1>
 
         <div className="w-full max-w-xl">{inputBox}</div>
 
