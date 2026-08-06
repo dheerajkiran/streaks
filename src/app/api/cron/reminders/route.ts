@@ -4,17 +4,18 @@ import { createAdminClient } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
 
-webpush.setVapidDetails(
-  "mailto:admin@streaks.app",
-  process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
-  process.env.VAPID_PRIVATE_KEY!
-);
-
 export async function GET(request: NextRequest) {
   const auth = request.headers.get("authorization");
   if (auth !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+  const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY;
+  if (!vapidPublicKey || !vapidPrivateKey) {
+    return NextResponse.json({ error: "VAPID keys not configured" }, { status: 500 });
+  }
+  webpush.setVapidDetails("mailto:admin@streaks.app", vapidPublicKey, vapidPrivateKey);
 
   const supabase = createAdminClient();
   const now = new Date();
