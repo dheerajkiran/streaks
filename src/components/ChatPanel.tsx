@@ -96,7 +96,7 @@ export function ChatPanel({
   if (!hasMessages) {
     return (
       <div className="min-h-[65vh] flex flex-col items-center justify-center gap-8">
-        <h1 className="text-2xl sm:text-3xl font-serif text-center">{getGreeting(name)}</h1>
+        <h1 className="text-4xl sm:text-5xl font-serif text-center">{getGreeting(name)}</h1>
 
         <div className="w-full max-w-xl">{inputBox}</div>
 
