@@ -54,7 +54,7 @@ export async function createEntry(formData: FormData) {
     end_time: endTime,
   });
 
-  revalidatePath("/");
+  revalidatePath("/activity");
 }
 
 export async function updateEntry(entryId: string, formData: FormData) {
@@ -98,12 +98,12 @@ export async function updateEntry(entryId: string, formData: FormData) {
 
   if (error) return { error: error.message };
 
-  revalidatePath("/");
+  revalidatePath("/activity");
 }
 
 export async function deleteEntry(entryId: string) {
   const supabase = await createClient();
   await supabase.from("entries").delete().eq("id", entryId);
 
-  revalidatePath("/");
+  revalidatePath("/activity");
 }

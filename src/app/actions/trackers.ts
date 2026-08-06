@@ -34,7 +34,7 @@ export async function createTracker(formData: FormData) {
   if (error) return { error: error.message };
 
   revalidatePath("/trackers");
-  revalidatePath("/");
+  revalidatePath("/activity");
 }
 
 export async function updateTracker(trackerId: string, formData: FormData) {
@@ -65,7 +65,7 @@ export async function updateTracker(trackerId: string, formData: FormData) {
   if (error) return { error: error.message };
 
   revalidatePath("/trackers");
-  revalidatePath("/");
+  revalidatePath("/activity");
 }
 
 export async function setTrackerArchived(trackerId: string, archived: boolean) {
@@ -76,7 +76,7 @@ export async function setTrackerArchived(trackerId: string, archived: boolean) {
     .eq("id", trackerId);
 
   revalidatePath("/trackers");
-  revalidatePath("/");
+  revalidatePath("/activity");
 }
 
 export async function deleteTracker(trackerId: string) {
@@ -84,5 +84,5 @@ export async function deleteTracker(trackerId: string) {
   await supabase.from("trackers").delete().eq("id", trackerId);
 
   revalidatePath("/trackers");
-  revalidatePath("/");
+  revalidatePath("/activity");
 }

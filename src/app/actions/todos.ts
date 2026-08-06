@@ -32,7 +32,7 @@ export async function createTodo(formData: FormData) {
   });
   if (error) return { error: error.message };
 
-  revalidatePath("/");
+  revalidatePath("/activity");
 }
 
 export async function setTodoDone(todoId: string, isDone: boolean) {
@@ -42,7 +42,7 @@ export async function setTodoDone(todoId: string, isDone: boolean) {
     .update({ is_done: isDone, completed_at: isDone ? new Date().toISOString() : null })
     .eq("id", todoId);
 
-  revalidatePath("/");
+  revalidatePath("/activity");
 }
 
 export async function updateTodo(todoId: string, formData: FormData) {
@@ -60,12 +60,12 @@ export async function updateTodo(todoId: string, formData: FormData) {
     .eq("id", todoId);
   if (error) return { error: error.message };
 
-  revalidatePath("/");
+  revalidatePath("/activity");
 }
 
 export async function deleteTodo(todoId: string) {
   const supabase = await createClient();
   await supabase.from("todos").delete().eq("id", todoId);
 
-  revalidatePath("/");
+  revalidatePath("/activity");
 }
