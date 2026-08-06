@@ -42,3 +42,21 @@ export type Todo = {
   created_at: string;
   completed_at: string | null;
 };
+
+export type PushSubscriptionRow = {
+  id: string;
+  user_id: string;
+  endpoint: string;
+  p256dh: string;
+  auth: string;
+  created_at: string;
+};
+
+export type NotificationSettings = {
+  user_id: string;
+  enabled: boolean;
+  reminder_hour: number;
+  timezone: string;
+  last_reminded_date: string | null;
+  updated_at: string;
+};
