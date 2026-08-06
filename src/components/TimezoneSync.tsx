@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { saveTimezone } from "@/app/actions/settings";
 
 export function TimezoneSync() {
   useEffect(() => {
@@ -12,6 +13,7 @@ export function TimezoneSync() {
 
     if (cookieTz !== tz) {
       document.cookie = `tz=${tz}; path=/; max-age=31536000; SameSite=Lax`;
+      saveTimezone(tz);
       if (!sessionStorage.getItem("tz-synced")) {
         sessionStorage.setItem("tz-synced", "1");
         window.location.reload();
