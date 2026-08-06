@@ -60,3 +60,25 @@ export type NotificationSettings = {
   last_reminded_date: string | null;
   updated_at: string;
 };
+
+export type FinanceCategory = {
+  id: string;
+  user_id: string;
+  name: string;
+  created_at: string;
+};
+
+export type Transaction = {
+  id: string;
+  user_id: string;
+  category_id: string | null;
+  amount: number;
+  place: string | null;
+  item: string | null;
+  occurred_on: string;
+  created_at: string;
+};
+
+export type TransactionWithCategory = Transaction & {
+  finance_categories: Pick<FinanceCategory, "id" | "name"> | null;
+};
