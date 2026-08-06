@@ -28,6 +28,9 @@ export default async function DashboardLayout({
             <Link href="/trackers" className="text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100">
               Trackers
             </Link>
+            <Link href="/todos" className="text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100">
+              To-Do
+            </Link>
           </nav>
           <form action={signOut}>
             <button
