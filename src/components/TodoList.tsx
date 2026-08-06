@@ -27,9 +27,25 @@ function todayISO() {
   return new Date().toISOString().slice(0, 10);
 }
 
+function tomorrowISO() {
+  const d = new Date();
+  d.setDate(d.getDate() + 1);
+  return d.toISOString().slice(0, 10);
+}
+
 export function TodoList({ todos }: { todos: Todo[] }) {
   const formRef = useRef<HTMLFormElement>(null);
-  const open = sortTodos(todos.filter((t) => !t.is_done));
+  const [quickDate, setQuickDate] = useState<"" | "today" | "tomorrow">("");
+
+  const today = todayISO();
+  const tomorrow = tomorrowISO();
+
+  const openTodos = todos.filter((t) => !t.is_done);
+  const overdue = sortTodos(openTodos.filter((t) => t.due_date && t.due_date < today));
+  const dueToday = sortTodos(openTodos.filter((t) => t.due_date === today));
+  const dueTomorrow = sortTodos(openTodos.filter((t) => t.due_date === tomorrow));
+  const upcoming = sortTodos(openTodos.filter((t) => t.due_date && t.due_date > tomorrow));
+  const unscheduled = sortTodos(openTodos.filter((t) => !t.due_date));
   const done = sortTodos(todos.filter((t) => t.is_done));
 
   return (
@@ -41,35 +57,109 @@ export function TodoList({ todos }: { todos: Todo[] }) {
         action={async (formData) => {
           await createTodo(formData);
           formRef.current?.reset();
+          setQuickDate("");
         }}
-        className="flex gap-2"
+        className="space-y-2"
       >
-        <input
-          name="text"
-          placeholder="Something to remember..."
-          required
-          className="flex-1 min-w-0 rounded-lg border border-neutral-300 dark:border-neutral-700 bg-transparent px-3 py-1.5 text-sm outline-none focus:border-neutral-500"
-        />
-        <button
-          type="submit"
-          className="rounded-lg bg-neutral-900 dark:bg-neutral-100 text-neutral-50 dark:text-neutral-900 px-3 py-1.5 text-sm font-medium shrink-0"
-        >
-          Add
-        </button>
+        <div className="flex gap-2">
+          <input
+            name="text"
+            placeholder="Something to remember..."
+            required
+            className="flex-1 min-w-0 rounded-lg border border-neutral-300 dark:border-neutral-700 bg-transparent px-3 py-1.5 text-sm outline-none focus:border-neutral-500"
+          />
+          <button
+            type="submit"
+            className="rounded-lg bg-neutral-900 dark:bg-neutral-100 text-neutral-50 dark:text-neutral-900 px-3 py-1.5 text-sm font-medium shrink-0"
+          >
+            Add
+          </button>
+        </div>
+        <div className="flex items-center gap-1">
+          <input
+            type="hidden"
+            name="due_date"
+            value={quickDate === "today" ? today : quickDate === "tomorrow" ? tomorrow : ""}
+          />
+          <QuickDateButton
+            label="No date"
+            active={quickDate === ""}
+            onClick={() => setQuickDate("")}
+          />
+          <QuickDateButton
+            label="Today"
+            active={quickDate === "today"}
+            onClick={() => setQuickDate("today")}
+          />
+          <QuickDateButton
+            label="Tomorrow"
+            active={quickDate === "tomorrow"}
+            onClick={() => setQuickDate("tomorrow")}
+          />
+        </div>
       </form>
 
       {todos.length === 0 ? (
         <p className="text-sm text-neutral-400">Nothing on your list yet.</p>
       ) : (
-        <ul className="space-y-1">
-          {open.map((todo) => (
-            <TodoRow key={todo.id} todo={todo} />
-          ))}
-          {done.map((todo) => (
-            <TodoRow key={todo.id} todo={todo} />
-          ))}
-        </ul>
+        <div className="space-y-4">
+          <TodoSection title="Overdue" todos={overdue} titleClassName="text-red-500" />
+          <TodoSection title="Today" todos={dueToday} />
+          <TodoSection title="Tomorrow" todos={dueTomorrow} />
+          <TodoSection title="Upcoming" todos={upcoming} />
+          <TodoSection title="Unscheduled" todos={unscheduled} />
+          <TodoSection title="Done" todos={done} />
+        </div>
       )}
+    </div>
+  );
+}
+
+function QuickDateButton({
+  label,
+  active,
+  onClick,
+}: {
+  label: string;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`px-2 py-0.5 rounded-md text-xs border ${
+        active
+          ? "border-neutral-500 text-neutral-900 dark:text-neutral-100"
+          : "border-neutral-300 dark:border-neutral-700 text-neutral-400"
+      }`}
+    >
+      {label}
+    </button>
+  );
+}
+
+function TodoSection({
+  title,
+  todos,
+  titleClassName,
+}: {
+  title: string;
+  todos: Todo[];
+  titleClassName?: string;
+}) {
+  if (todos.length === 0) return null;
+
+  return (
+    <div>
+      <p className={`text-xs font-medium mb-1 ${titleClassName ?? "text-neutral-400"}`}>
+        {title}
+      </p>
+      <ul className="space-y-1">
+        {todos.map((todo) => (
+          <TodoRow key={todo.id} todo={todo} />
+        ))}
+      </ul>
     </div>
   );
 }
@@ -137,6 +227,20 @@ function TodoRow({ todo }: { todo: Todo }) {
                 {PRIORITY[p].label}
               </button>
             ))}
+          </div>
+
+          <div className="flex flex-wrap items-center gap-1">
+            <QuickDateButton
+              label="Today"
+              active={dueDate === todayISO()}
+              onClick={() => setDueDate(todayISO())}
+            />
+            <QuickDateButton
+              label="Tomorrow"
+              active={dueDate === tomorrowISO()}
+              onClick={() => setDueDate(tomorrowISO())}
+            />
+            <QuickDateButton label="Clear" active={false} onClick={() => setDueDate("")} />
           </div>
 
           <div className="flex flex-wrap gap-2">
