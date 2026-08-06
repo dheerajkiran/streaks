@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { TodoList } from "@/components/TodoList";
+import { TodoTable } from "@/components/TodoTable";
 import { NotificationSettings } from "@/components/NotificationSettings";
 import type { NotificationSettings as NotificationSettingsType, Todo } from "@/lib/types";
 
@@ -14,8 +14,8 @@ export default async function TodosPage() {
   const settings = (settingsData ?? null) as NotificationSettingsType | null;
 
   return (
-    <div className="max-w-2xl mx-auto space-y-8">
-      <TodoList todos={todos} />
+    <div className="max-w-6xl mx-auto space-y-8">
+      <TodoTable todos={todos} />
       <NotificationSettings
         settings={settings}
         vapidPublicKey={process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? ""}
