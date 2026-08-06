@@ -35,13 +35,19 @@ export function ChatPanel({
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [input, setInput] = useState("");
-  const hasMessages = messages.length > 0;
+  const [optimisticMessage, setOptimisticMessage] = useState<string | null>(null);
+  const hasMessages = messages.length > 0 || optimisticMessage !== null;
 
   async function submit(formData: FormData) {
+    const content = String(formData.get("message") ?? "").trim();
+    if (!content) return;
+
     if (conversationId) formData.set("conversation_id", conversationId);
+    setOptimisticMessage(content);
     setPending(true);
     const result = await sendChatMessage(formData);
     setPending(false);
+    setOptimisticMessage(null);
     if (result?.error) {
       setError(result.error);
       return;
@@ -133,6 +139,13 @@ export function ChatPanel({
             )}
           </li>
         ))}
+        {optimisticMessage !== null && (
+          <li className="flex justify-end">
+            <div className="max-w-[80%] rounded-2xl bg-neutral-900 dark:bg-neutral-100 text-neutral-50 dark:text-neutral-900 px-4 py-2 text-sm whitespace-pre-wrap opacity-70">
+              {optimisticMessage}
+            </div>
+          </li>
+        )}
         {pending && <li className="text-sm text-neutral-400">Thinking...</li>}
       </ul>
 
