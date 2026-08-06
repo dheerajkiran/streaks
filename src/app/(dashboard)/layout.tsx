@@ -36,6 +36,9 @@ export default async function DashboardLayout({
             <Link href="/finance" className="text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100">
               Finance
             </Link>
+            <Link href="/assistant" className="text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100">
+              Assistant
+            </Link>
           </nav>
           <form action={signOut}>
             <button
