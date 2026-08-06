@@ -151,7 +151,7 @@ export async function sendChatMessage(formData: FormData) {
   let finalMessage;
   try {
     finalMessage = await client.beta.messages.toolRunner({
-      model: "claude-sonnet-5",
+      model: "claude-haiku-4-5",
       max_tokens: 2048,
       system: systemPrompt,
       tools: [getTrackerTotals, getSpendingByCategory, getOpenTodos],
