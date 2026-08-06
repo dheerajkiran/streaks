@@ -82,3 +82,13 @@ export type Transaction = {
 export type TransactionWithCategory = Transaction & {
   finance_categories: Pick<FinanceCategory, "id" | "name"> | null;
 };
+
+export type ChatRole = "user" | "assistant";
+
+export type ChatMessage = {
+  id: string;
+  user_id: string;
+  role: ChatRole;
+  content: string;
+  created_at: string;
+};
