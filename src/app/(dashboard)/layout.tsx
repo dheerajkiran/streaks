@@ -27,6 +27,9 @@ export default async function DashboardLayout({
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <nav className="flex items-center gap-4 text-sm font-medium">
             <Link href="/">Streaks</Link>
+            <Link href="/activity" className="text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100">
+              Activity Tracker
+            </Link>
             <Link href="/trackers" className="text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100">
               Trackers
             </Link>
@@ -35,9 +38,6 @@ export default async function DashboardLayout({
             </Link>
             <Link href="/finance" className="text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100">
               Finance
-            </Link>
-            <Link href="/assistant" className="text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100">
-              Assistant
             </Link>
           </nav>
           <form action={signOut}>

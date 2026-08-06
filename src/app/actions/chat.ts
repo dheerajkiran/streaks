@@ -157,7 +157,7 @@ export async function sendChatMessage(formData: FormData) {
     if (replyError) return { error: replyError.message };
   }
 
-  revalidatePath("/assistant");
+  revalidatePath("/");
 }
 
 export async function clearChatHistory() {
@@ -168,5 +168,5 @@ export async function clearChatHistory() {
   if (!user) return;
 
   await supabase.from("chat_messages").delete().eq("user_id", user.id);
-  revalidatePath("/assistant");
+  revalidatePath("/");
 }
