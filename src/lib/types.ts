@@ -73,14 +73,25 @@ export type Transaction = {
   user_id: string;
   category_id: string | null;
   amount: number;
+  my_share: number | null;
   place: string | null;
   item: string | null;
   occurred_on: string;
   created_at: string;
 };
 
+export type TransactionSplit = {
+  id: string;
+  transaction_id: string;
+  user_id: string;
+  person_name: string;
+  amount: number;
+  created_at: string;
+};
+
 export type TransactionWithCategory = Transaction & {
   finance_categories: Pick<FinanceCategory, "id" | "name"> | null;
+  transaction_splits: TransactionSplit[];
 };
 
 export type ChatRole = "user" | "assistant";

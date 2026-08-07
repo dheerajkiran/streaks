@@ -112,12 +112,13 @@ export async function sendChatMessage(formData: FormData) {
 
   const getSpendingByCategory = betaTool({
     name: "get_spending_by_category",
-    description: "Get total spending grouped by finance category for a date range, sorted highest total first.",
+    description:
+      "Get the user's own spending grouped by finance category for a date range, sorted highest total first. Uses their actual share of each transaction, excluding amounts fronted for other people on split transactions.",
     inputSchema: dateRangeSchema,
     run: async ({ start_date, end_date }) => {
       const { data, error } = await supabase
         .from("transactions")
-        .select("amount, category_id, finance_categories(name)")
+        .select("amount, my_share, category_id, finance_categories(name)")
         .eq("user_id", user.id)
         .gte("occurred_on", start_date)
         .lte("occurred_on", end_date);
@@ -127,7 +128,8 @@ export async function sendChatMessage(formData: FormData) {
       for (const row of data ?? []) {
         const category = row.finance_categories as unknown as { name: string } | null;
         const key = category?.name ?? "Uncategorized";
-        totals.set(key, (totals.get(key) ?? 0) + Number(row.amount));
+        const spend = Number(row.my_share ?? row.amount);
+        totals.set(key, (totals.get(key) ?? 0) + spend);
       }
 
       const result = Array.from(totals.entries())

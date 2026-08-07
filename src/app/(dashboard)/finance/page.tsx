@@ -15,7 +15,7 @@ export default async function FinancePage() {
     supabase.from("finance_categories").select("*").order("name"),
     supabase
       .from("transactions")
-      .select("*, finance_categories(id, name)")
+      .select("*, finance_categories(id, name), transaction_splits(*)")
       .order("occurred_on", { ascending: false })
       .order("created_at", { ascending: false }),
   ]);
@@ -23,10 +23,11 @@ export default async function FinancePage() {
   const categories = (categoryData ?? []) as FinanceCategory[];
   const transactions = (transactionData ?? []) as TransactionWithCategory[];
 
-  const total = transactions.reduce((sum, t) => sum + Number(t.amount), 0);
+  const mySpend = (t: TransactionWithCategory) => Number(t.my_share ?? t.amount);
+  const total = transactions.reduce((sum, t) => sum + mySpend(t), 0);
   const thisMonth = transactions
     .filter((t) => t.occurred_on.slice(0, 7) === currentMonth)
-    .reduce((sum, t) => sum + Number(t.amount), 0);
+    .reduce((sum, t) => sum + mySpend(t), 0);
 
   return (
     <div className="max-w-6xl mx-auto space-y-8">
@@ -40,7 +41,7 @@ export default async function FinancePage() {
 
       <div>
         <h2 className="text-sm font-medium text-neutral-500 mb-2">Transactions</h2>
-        <TransactionList transactions={transactions} />
+        <TransactionList transactions={transactions} categories={categories} />
       </div>
     </div>
   );
