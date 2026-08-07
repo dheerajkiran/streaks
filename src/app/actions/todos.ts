@@ -9,6 +9,12 @@ function parsePriority(value: FormDataEntryValue | null): TodoPriority | null {
   return s === "low" || s === "medium" || s === "high" ? s : null;
 }
 
+function revalidateTodoPaths() {
+  revalidatePath("/todos");
+  revalidatePath("/activity");
+  revalidatePath("/");
+}
+
 export async function createTodo(formData: FormData) {
   const supabase = await createClient();
   const {
@@ -32,7 +38,7 @@ export async function createTodo(formData: FormData) {
   });
   if (error) return { error: error.message };
 
-  revalidatePath("/activity");
+  revalidateTodoPaths();
 }
 
 export async function setTodoDone(todoId: string, isDone: boolean) {
@@ -42,7 +48,14 @@ export async function setTodoDone(todoId: string, isDone: boolean) {
     .update({ is_done: isDone, completed_at: isDone ? new Date().toISOString() : null })
     .eq("id", todoId);
 
-  revalidatePath("/activity");
+  revalidateTodoPaths();
+}
+
+export async function setTodoDueDate(todoId: string, dueDate: string | null) {
+  const supabase = await createClient();
+  await supabase.from("todos").update({ due_date: dueDate }).eq("id", todoId);
+
+  revalidateTodoPaths();
 }
 
 export async function updateTodo(todoId: string, formData: FormData) {
@@ -60,12 +73,12 @@ export async function updateTodo(todoId: string, formData: FormData) {
     .eq("id", todoId);
   if (error) return { error: error.message };
 
-  revalidatePath("/activity");
+  revalidateTodoPaths();
 }
 
 export async function deleteTodo(todoId: string) {
   const supabase = await createClient();
   await supabase.from("todos").delete().eq("id", todoId);
 
-  revalidatePath("/activity");
+  revalidateTodoPaths();
 }

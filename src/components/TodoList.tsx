@@ -136,7 +136,7 @@ function TodoSection({
   );
 }
 
-function TodoRow({ todo }: { todo: Todo }) {
+export function TodoRow({ todo }: { todo: Todo }) {
   const [editing, setEditing] = useState(false);
   const [text, setText] = useState(todo.text);
   const [priority, setPriority] = useState<TodoPriority | "">(todo.priority ?? "");

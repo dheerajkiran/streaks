@@ -1,7 +1,8 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { createTodo, deleteTodo, setTodoDone, updateTodo } from "@/app/actions/todos";
+import { createTodo, deleteTodo, setTodoDone, setTodoDueDate, updateTodo } from "@/app/actions/todos";
+import { TodoRow } from "@/components/TodoList";
 import { PRIORITY, sortTodos, todayISO, tomorrowISO } from "@/lib/todos";
 import type { Todo, TodoPriority } from "@/lib/types";
 
@@ -41,6 +42,7 @@ const COLUMNS = ["", "Topic", "Due date", "Category", "Urgency", ""];
 export function TodoTable({ todos }: { todos: Todo[] }) {
   const formRef = useRef<HTMLFormElement>(null);
   const [quickDate, setQuickDate] = useState<"" | "today" | "tomorrow">("");
+  const [isDragOver, setIsDragOver] = useState(false);
 
   const today = todayISO();
   const tomorrow = tomorrowISO();
@@ -54,7 +56,41 @@ export function TodoTable({ todos }: { todos: Todo[] }) {
   const done = sortTodos(todos.filter((t) => t.is_done));
 
   return (
-    <div className="rounded-xl border border-neutral-200 dark:border-neutral-800 p-4 space-y-4">
+    <div className="space-y-6">
+      <div
+        onDragOver={(e) => {
+          e.preventDefault();
+          setIsDragOver(true);
+        }}
+        onDragLeave={() => setIsDragOver(false)}
+        onDrop={(e) => {
+          e.preventDefault();
+          setIsDragOver(false);
+          const id = e.dataTransfer.getData("text/plain");
+          if (id) setTodoDueDate(id, today);
+        }}
+        className={`rounded-xl border p-4 space-y-2 transition-colors ${
+          isDragOver
+            ? "border-neutral-500 bg-neutral-50 dark:bg-neutral-900"
+            : "border-neutral-200 dark:border-neutral-800"
+        }`}
+      >
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-medium">Today&rsquo;s focus</h2>
+          <span className="text-xs text-neutral-400">Drag a task here to pin it to today</span>
+        </div>
+        {dueToday.length === 0 ? (
+          <p className="text-sm text-neutral-400">Nothing pinned to today yet.</p>
+        ) : (
+          <ul className="space-y-1">
+            {dueToday.map((todo) => (
+              <TodoRow key={todo.id} todo={todo} />
+            ))}
+          </ul>
+        )}
+      </div>
+
+      <div className="rounded-xl border border-neutral-200 dark:border-neutral-800 p-4 space-y-4">
       <h2 className="text-sm font-medium text-neutral-500">To-do</h2>
 
       <form
@@ -115,16 +151,16 @@ export function TodoTable({ todos }: { todos: Todo[] }) {
               </tr>
             </thead>
             <tbody>
-              <GroupRows title="Overdue" todos={overdue} titleClassName="text-red-500" />
-              <GroupRows title="Today" todos={dueToday} />
-              <GroupRows title="Tomorrow" todos={dueTomorrow} />
-              <GroupRows title="Upcoming" todos={upcoming} />
-              <GroupRows title="Unscheduled" todos={unscheduled} />
+              <GroupRows title="Overdue" todos={overdue} titleClassName="text-red-500" draggable />
+              <GroupRows title="Tomorrow" todos={dueTomorrow} draggable />
+              <GroupRows title="Upcoming" todos={upcoming} draggable />
+              <GroupRows title="Unscheduled" todos={unscheduled} draggable />
               <GroupRows title="Done" todos={done} />
             </tbody>
           </table>
         </div>
       )}
+      </div>
     </div>
   );
 }
@@ -133,10 +169,12 @@ function GroupRows({
   title,
   todos,
   titleClassName,
+  draggable,
 }: {
   title: string;
   todos: Todo[];
   titleClassName?: string;
+  draggable?: boolean;
 }) {
   if (todos.length === 0) return null;
 
@@ -148,13 +186,13 @@ function GroupRows({
         </td>
       </tr>
       {todos.map((todo) => (
-        <TodoTableRow key={todo.id} todo={todo} />
+        <TodoTableRow key={todo.id} todo={todo} draggable={draggable} />
       ))}
     </>
   );
 }
 
-function TodoTableRow({ todo }: { todo: Todo }) {
+function TodoTableRow({ todo, draggable }: { todo: Todo; draggable?: boolean }) {
   const [editing, setEditing] = useState(false);
   const [text, setText] = useState(todo.text);
   const [priority, setPriority] = useState<TodoPriority | "">(todo.priority ?? "");
@@ -285,7 +323,11 @@ function TodoTableRow({ todo }: { todo: Todo }) {
   const isOverdue = !todo.is_done && !!todo.due_date && todo.due_date < todayISO();
 
   return (
-    <tr>
+    <tr
+      draggable={draggable}
+      onDragStart={(e) => e.dataTransfer.setData("text/plain", todo.id)}
+      className={draggable ? "cursor-grab active:cursor-grabbing" : ""}
+    >
       <td className={cellClass}>
         <input
           type="checkbox"
