@@ -32,25 +32,6 @@ function titleFromMessage(content: string) {
 
 const MODEL = "claude-haiku-4-5";
 
-export async function setAssistantCredit(formData: FormData) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return;
-
-  const creditedUsd = Number(formData.get("credited_usd"));
-  if (!Number.isFinite(creditedUsd) || creditedUsd < 0) return { error: "Enter a valid amount." };
-
-  const { error } = await supabase.from("assistant_usage").upsert(
-    { user_id: user.id, credited_usd: creditedUsd, credited_at: new Date().toISOString() },
-    { onConflict: "user_id" }
-  );
-  if (error) return { error: error.message };
-
-  revalidatePath("/");
-}
-
 export async function sendChatMessage(formData: FormData) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
