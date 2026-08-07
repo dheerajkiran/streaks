@@ -26,7 +26,7 @@ export default async function AssistantLayout({
   const todayTodos = (todoData ?? []) as Todo[];
 
   return (
-    <div className="max-w-6xl -ml-1.5 flex flex-col md:flex-row gap-6 md:gap-8 md:h-full">
+    <div className="max-w-6xl -ml-1.5 xl:ml-0 xl:mx-auto flex flex-col md:flex-row gap-6 md:gap-8 md:h-full">
       <ChatSidebar conversations={conversations} />
       <div className="flex-1 min-w-0 md:h-full">{children}</div>
       <div className="w-full md:w-64 md:shrink-0">
