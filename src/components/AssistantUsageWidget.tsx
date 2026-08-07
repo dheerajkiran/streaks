@@ -16,18 +16,7 @@ export function AssistantUsageWidget({
   const remaining = spentUsd !== null ? Math.max(creditedUsd - spentUsd, 0) : null;
 
   return (
-    <div className="rounded-xl border border-neutral-200 dark:border-neutral-800 p-4 space-y-2">
-      <div className="flex items-center justify-between">
-        <h2 className="text-sm font-medium text-neutral-500">Claude usage</h2>
-        <button
-          type="button"
-          onClick={() => setEditing((e) => !e)}
-          className="text-xs text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100"
-        >
-          {editing ? "Cancel" : "Edit"}
-        </button>
-      </div>
-
+    <div className="rounded-lg border border-neutral-200 dark:border-neutral-800 px-2.5 py-1.5 text-xs">
       {editing ? (
         <form
           ref={formRef}
@@ -40,9 +29,9 @@ export function AssistantUsageWidget({
             setError(null);
             setEditing(false);
           }}
-          className="flex items-center gap-2"
+          className="flex items-center gap-1.5"
         >
-          <span className="text-sm text-neutral-400">$</span>
+          <span className="text-neutral-400">$</span>
           <input
             name="credited_usd"
             type="number"
@@ -50,31 +39,46 @@ export function AssistantUsageWidget({
             min="0"
             defaultValue={creditedUsd}
             autoFocus
-            className="w-20 rounded-lg border border-neutral-300 dark:border-neutral-700 bg-transparent px-2 py-1 text-sm outline-none focus:border-neutral-500"
+            className="w-14 rounded border border-neutral-300 dark:border-neutral-700 bg-transparent px-1.5 py-0.5 text-xs outline-none focus:border-neutral-500"
           />
           <button
             type="submit"
-            className="rounded-lg bg-neutral-900 dark:bg-neutral-100 text-neutral-50 dark:text-neutral-900 px-2 py-1 text-xs font-medium"
+            className="rounded bg-neutral-900 dark:bg-neutral-100 text-neutral-50 dark:text-neutral-900 px-1.5 py-0.5 text-[10px] font-medium"
           >
             Save
           </button>
+          <button
+            type="button"
+            onClick={() => setEditing(false)}
+            className="text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100"
+          >
+            Cancel
+          </button>
         </form>
-      ) : remaining !== null ? (
-        <>
-          <p className="text-2xl font-semibold tabular-nums">${remaining.toFixed(2)}</p>
-          <p className="text-xs text-neutral-400">
-            remaining of ${creditedUsd.toFixed(2)} topped up · ${spentUsd!.toFixed(2)} spent
-          </p>
-          <p className="text-[10px] text-neutral-400">From Anthropic&rsquo;s official Cost API.</p>
-        </>
       ) : (
-        <p className="text-xs text-neutral-400">
-          Add an <code className="text-[10px]">ANTHROPIC_ADMIN_API_KEY</code> env var (from Console &rarr; Settings
-          &rarr; Admin keys) to see official spend here. Click Edit to set how much you&rsquo;ve topped up either
-          way.
-        </p>
+        <div className="flex items-center justify-between gap-2 text-neutral-400">
+          <span className="truncate">
+            {remaining !== null ? (
+              <>
+                <span className="font-medium text-neutral-900 dark:text-neutral-100">
+                  ${remaining.toFixed(2)}
+                </span>{" "}
+                left of ${creditedUsd.toFixed(2)}
+              </>
+            ) : (
+              "Claude usage: not configured"
+            )}
+          </span>
+          <button
+            type="button"
+            onClick={() => setEditing(true)}
+            className="shrink-0 hover:text-neutral-900 dark:hover:text-neutral-100"
+          >
+            Edit
+          </button>
+        </div>
       )}
-      {error && <p className="text-xs text-red-600 dark:text-red-400">{error}</p>}
+      {error && <p className="text-red-600 dark:text-red-400">{error}</p>}
     </div>
   );
 }

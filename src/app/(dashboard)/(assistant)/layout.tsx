@@ -35,9 +35,11 @@ export default async function AssistantLayout({
     <div className="max-w-6xl mx-auto flex flex-col md:flex-row gap-6 md:gap-8 md:h-full">
       <ChatSidebar conversations={conversations} />
       <div className="flex-1 min-w-0 md:h-full">{children}</div>
-      <div className="w-full md:w-64 md:shrink-0 space-y-6">
+      <div className="w-full md:w-64 md:shrink-0 flex flex-col md:h-full">
         <TodayObjectives todos={todayTodos} />
-        <AssistantUsageWidget creditedUsd={usage ? Number(usage.credited_usd) : 5} spentUsd={spentUsd} />
+        <div className="mt-6 md:mt-auto">
+          <AssistantUsageWidget creditedUsd={usage ? Number(usage.credited_usd) : 5} spentUsd={spentUsd} />
+        </div>
       </div>
     </div>
   );
