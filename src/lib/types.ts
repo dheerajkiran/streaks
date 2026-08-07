@@ -97,6 +97,18 @@ export type TransactionWithCategory = Transaction & {
   transaction_splits: TransactionSplit[];
 };
 
+export type PantryItem = {
+  id: string;
+  user_id: string;
+  name: string;
+  quantity: number | null;
+  unit: string | null;
+  category: string | null;
+  expiry_date: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
 export type ChatRole = "user" | "assistant";
 
 export type ChatConversation = {
