@@ -8,12 +8,12 @@ export function AssistantUsageWidget({
   spentUsd,
 }: {
   creditedUsd: number;
-  spentUsd: number;
+  spentUsd: number | null;
 }) {
   const formRef = useRef<HTMLFormElement>(null);
   const [editing, setEditing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const remaining = Math.max(creditedUsd - spentUsd, 0);
+  const remaining = spentUsd !== null ? Math.max(creditedUsd - spentUsd, 0) : null;
 
   return (
     <div className="rounded-xl border border-neutral-200 dark:border-neutral-800 p-4 space-y-2">
@@ -59,16 +59,22 @@ export function AssistantUsageWidget({
             Save
           </button>
         </form>
-      ) : (
+      ) : remaining !== null ? (
         <>
           <p className="text-2xl font-semibold tabular-nums">${remaining.toFixed(2)}</p>
           <p className="text-xs text-neutral-400">
-            remaining of ${creditedUsd.toFixed(2)} topped up · ~${spentUsd.toFixed(4)} spent
+            remaining of ${creditedUsd.toFixed(2)} topped up · ${spentUsd!.toFixed(2)} spent
           </p>
+          <p className="text-[10px] text-neutral-400">From Anthropic&rsquo;s official Cost API.</p>
         </>
+      ) : (
+        <p className="text-xs text-neutral-400">
+          Add an <code className="text-[10px]">ANTHROPIC_ADMIN_API_KEY</code> env var (from Console &rarr; Settings
+          &rarr; Admin keys) to see official spend here. Click Edit to set how much you&rsquo;ve topped up either
+          way.
+        </p>
       )}
       {error && <p className="text-xs text-red-600 dark:text-red-400">{error}</p>}
-      <p className="text-[10px] text-neutral-400">Estimated from token usage - not official billing data.</p>
     </div>
   );
 }

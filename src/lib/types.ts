@@ -105,6 +105,6 @@ export type ChatMessage = {
 export type AssistantUsage = {
   user_id: string;
   credited_usd: number;
-  spent_usd: number;
+  credited_at: string;
   updated_at: string;
 };

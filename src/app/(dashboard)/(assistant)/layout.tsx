@@ -3,6 +3,7 @@ import { ChatSidebar } from "@/components/ChatSidebar";
 import { TodayObjectives } from "@/components/TodayObjectives";
 import { AssistantUsageWidget } from "@/components/AssistantUsageWidget";
 import { getTodayInUserTimeZone } from "@/lib/timezone";
+import { fetchAssistantSpendUsd } from "@/lib/anthropicCost";
 import type { AssistantUsage, ChatConversation, Todo } from "@/lib/types";
 
 export default async function AssistantLayout({
@@ -28,16 +29,15 @@ export default async function AssistantLayout({
   const todayTodos = (todoData ?? []) as Todo[];
   const usage = usageData as AssistantUsage | null;
 
+  const spentUsd = usage ? await fetchAssistantSpendUsd(usage.credited_at) : null;
+
   return (
     <div className="max-w-6xl mx-auto flex flex-col md:flex-row gap-6 md:gap-8 md:h-full">
       <ChatSidebar conversations={conversations} />
       <div className="flex-1 min-w-0 md:h-full">{children}</div>
       <div className="w-full md:w-64 md:shrink-0 space-y-6">
         <TodayObjectives todos={todayTodos} />
-        <AssistantUsageWidget
-          creditedUsd={usage ? Number(usage.credited_usd) : 5}
-          spentUsd={usage ? Number(usage.spent_usd) : 0}
-        />
+        <AssistantUsageWidget creditedUsd={usage ? Number(usage.credited_usd) : 5} spentUsd={spentUsd} />
       </div>
     </div>
   );
