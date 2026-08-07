@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { getTodayInUserTimeZone } from "@/lib/timezone";
 import { FinanceSummary } from "@/components/FinanceSummary";
+import { CategorySpendBreakdown } from "@/components/CategorySpendBreakdown";
 import { CategoryManager } from "@/components/CategoryManager";
 import { TransactionForm } from "@/components/TransactionForm";
 import { TransactionList } from "@/components/TransactionList";
@@ -25,9 +26,18 @@ export default async function FinancePage() {
 
   const mySpend = (t: TransactionWithCategory) => Number(t.my_share ?? t.amount);
   const total = transactions.reduce((sum, t) => sum + mySpend(t), 0);
-  const thisMonth = transactions
-    .filter((t) => t.occurred_on.slice(0, 7) === currentMonth)
-    .reduce((sum, t) => sum + mySpend(t), 0);
+  const monthTransactions = transactions.filter((t) => t.occurred_on.slice(0, 7) === currentMonth);
+  const thisMonth = monthTransactions.reduce((sum, t) => sum + mySpend(t), 0);
+
+  const categorySpend = new Map<string, number>();
+  for (const t of monthTransactions) {
+    const key = t.finance_categories?.name ?? "Uncategorized";
+    categorySpend.set(key, (categorySpend.get(key) ?? 0) + mySpend(t));
+  }
+  const categoryBreakdown = Array.from(categorySpend.entries())
+    .map(([name, amount]) => ({ name, amount }))
+    .filter((c) => c.amount > 0)
+    .sort((a, b) => b.amount - a.amount);
 
   return (
     <div className="max-w-6xl mx-auto space-y-8">
@@ -35,6 +45,8 @@ export default async function FinancePage() {
         <h1 className="text-lg font-semibold mb-4">Finance</h1>
         <FinanceSummary total={total} thisMonth={thisMonth} />
       </div>
+
+      <CategorySpendBreakdown items={categoryBreakdown} />
 
       <TransactionForm categories={categories} />
       <CategoryManager categories={categories} />
