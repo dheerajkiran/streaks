@@ -22,7 +22,7 @@ export default async function ChatConversationPage({
   if (messages.length === 0) notFound();
 
   return (
-    <div className="max-w-3xl mx-auto">
+    <div className="max-w-3xl mx-auto md:h-full">
       <ChatPanel messages={messages} name={USER_NAME} conversationId={id} />
     </div>
   );

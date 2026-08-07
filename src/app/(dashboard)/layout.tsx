@@ -20,7 +20,7 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen flex flex-col">
       <TimezoneSync />
       <ServiceWorkerRegister />
       <header className="border-b border-neutral-200 dark:border-neutral-800 px-6 py-4">
@@ -50,7 +50,7 @@ export default async function DashboardLayout({
           </form>
         </div>
       </header>
-      <main className="px-6 py-8">{children}</main>
+      <main className="px-6 py-8 flex-1">{children}</main>
     </div>
   );
 }
