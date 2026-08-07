@@ -101,3 +101,10 @@ export type ChatMessage = {
   content: string;
   created_at: string;
 };
+
+export type AssistantUsage = {
+  user_id: string;
+  credited_usd: number;
+  spent_usd: number;
+  updated_at: string;
+};

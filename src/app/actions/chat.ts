@@ -30,6 +30,31 @@ function titleFromMessage(content: string) {
   return oneLine.length > 60 ? `${oneLine.slice(0, 60)}...` : oneLine;
 }
 
+const MODEL = "claude-haiku-4-5";
+
+const MODEL_PRICE_PER_MILLION: Record<string, { input: number; output: number }> = {
+  "claude-haiku-4-5": { input: 1, output: 5 },
+  "claude-sonnet-5": { input: 3, output: 15 },
+};
+
+export async function setAssistantCredit(formData: FormData) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return;
+
+  const creditedUsd = Number(formData.get("credited_usd"));
+  if (!Number.isFinite(creditedUsd) || creditedUsd < 0) return { error: "Enter a valid amount." };
+
+  const { error } = await supabase
+    .from("assistant_usage")
+    .upsert({ user_id: user.id, credited_usd: creditedUsd }, { onConflict: "user_id" });
+  if (error) return { error: error.message };
+
+  revalidatePath("/");
+}
+
 export async function sendChatMessage(formData: FormData) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
@@ -370,10 +395,12 @@ Use the read tools to look up the user's real data before answering questions ab
 You can also act directly on the user's behalf using the write tools (log_entry, add_todo, add_transaction) whenever they describe something that happened or something to remember - e.g. "I just woke up", "log 30 minutes of reading", "add a todo to call mom tomorrow", "I spent $12 on lunch at Chipotle". Don't ask for confirmation first - just do it, then briefly confirm what you recorded. Call list_trackers or list_finance_categories first if you need to match a name. If a tracker doesn't exist, say so and suggest the user create it on the Trackers page rather than guessing which one they meant. When the user says something like "just now" or "just woke up" without a specific time, use the current local time above.`;
 
   let wroteData = false;
-  let finalMessage;
+  let finalMessage: Anthropic.Beta.BetaMessage | undefined;
+  let inputTokens = 0;
+  let outputTokens = 0;
   try {
-    finalMessage = await client.beta.messages.toolRunner({
-      model: "claude-haiku-4-5",
+    const runner = client.beta.messages.toolRunner({
+      model: MODEL,
       max_tokens: 2048,
       system: systemPrompt,
       tools: [
@@ -388,9 +415,15 @@ You can also act directly on the user's behalf using the write tools (log_entry,
       ],
       messages: history.map((m) => ({ role: m.role, content: m.content })),
     });
+    for await (const message of runner) {
+      inputTokens += message.usage.input_tokens;
+      outputTokens += message.usage.output_tokens;
+      finalMessage = message;
+    }
   } catch (err) {
     return { error: err instanceof Error ? err.message : "Assistant request failed." };
   }
+  if (!finalMessage) return { error: "Assistant request failed." };
 
   const reply = finalMessage.content
     .filter((block): block is Anthropic.Beta.BetaTextBlock => block.type === "text")
@@ -409,6 +442,20 @@ You can also act directly on the user's behalf using the write tools (log_entry,
     .from("chat_conversations")
     .update({ updated_at: new Date().toISOString() })
     .eq("id", conversationId);
+
+  const pricing = MODEL_PRICE_PER_MILLION[MODEL];
+  if (pricing) {
+    const costDelta = (inputTokens / 1_000_000) * pricing.input + (outputTokens / 1_000_000) * pricing.output;
+    const { data: existingUsage } = await supabase
+      .from("assistant_usage")
+      .select("spent_usd")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    const newSpent = (existingUsage ? Number(existingUsage.spent_usd) : 0) + costDelta;
+    await supabase
+      .from("assistant_usage")
+      .upsert({ user_id: user.id, spent_usd: newSpent, updated_at: new Date().toISOString() }, { onConflict: "user_id" });
+  }
 
   revalidatePath("/");
   revalidatePath(`/chats/${conversationId}`);
