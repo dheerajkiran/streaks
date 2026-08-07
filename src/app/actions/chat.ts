@@ -170,7 +170,7 @@ export async function sendChatMessage(formData: FormData) {
   const logEntry = betaTool({
     name: "log_entry",
     description:
-      "Log a new entry for one of the user's existing trackers. For a 'time' tracker (e.g. Wake up), pass time as HH:MM 24-hour. For a 'duration' tracker, pass either value in minutes, or start_time and end_time (HH:MM) to have it computed. For a 'quantity' tracker, pass value. Only logs against trackers that already exist - if list_trackers doesn't have a matching name, tell the user no such tracker exists instead of guessing.",
+      "Log or correct an entry for one of the user's existing trackers. For a 'time' tracker (e.g. Wake up), pass time as HH:MM 24-hour - since a 'time' tracker is a single daily event, calling this again for the same tracker and date corrects the existing entry instead of duplicating it. For a 'duration' tracker, pass either value in minutes, or start_time and end_time (HH:MM) to have it computed. For a 'quantity' tracker, pass value. Only logs against trackers that already exist - if list_trackers doesn't have a matching name, tell the user no such tracker exists instead of guessing.",
     inputSchema: {
       type: "object",
       properties: {
@@ -226,6 +226,34 @@ export async function sendChatMessage(formData: FormData) {
       } else {
         if (typeof value !== "number") return "Error: This is a 'quantity' tracker - pass a numeric value.";
         entryValue = value;
+      }
+
+      if (tracker.type === "time") {
+        const { data: existing } = await supabase
+          .from("entries")
+          .select("id")
+          .eq("user_id", user.id)
+          .eq("tracker_id", tracker.id)
+          .eq("entry_date", entryDate)
+          .limit(1)
+          .maybeSingle();
+
+        if (existing) {
+          const { error: updateEntryError } = await supabase
+            .from("entries")
+            .update({ value: entryValue, note: note || null, start_time: entryStart, end_time: entryEnd })
+            .eq("id", existing.id);
+          if (updateEntryError) return `Error: ${updateEntryError.message}`;
+
+          wroteData = true;
+          return JSON.stringify({
+            logged: true,
+            updated: true,
+            tracker: tracker.name,
+            entry_date: entryDate,
+            value: entryValue,
+          });
+        }
       }
 
       const { error: insertEntryError } = await supabase.from("entries").insert({
