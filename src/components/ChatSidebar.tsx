@@ -8,6 +8,15 @@ import type { ChatConversation } from "@/lib/types";
 
 const STORAGE_KEY = "streaks-chat-sidebar-collapsed";
 
+function SidebarIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3">
+      <rect x="1.5" y="2.5" width="13" height="11" rx="1.5" />
+      <line x1="6" y1="2.5" x2="6" y2="13.5" />
+    </svg>
+  );
+}
+
 export function ChatSidebar({ conversations }: { conversations: ChatConversation[] }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -38,10 +47,11 @@ export function ChatSidebar({ conversations }: { conversations: ChatConversation
         <button
           type="button"
           onClick={toggleCollapsed}
-          aria-label="Expand chat history"
-          className="rounded-lg border border-neutral-200 dark:border-neutral-800 px-2 py-2 text-xs text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100"
+          aria-label="Open sidebar"
+          title="Open sidebar"
+          className="rounded-lg p-2 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-900 dark:hover:bg-neutral-800 dark:hover:text-neutral-100"
         >
-          »
+          <SidebarIcon />
         </button>
         <Link
           href="/"
@@ -56,22 +66,25 @@ export function ChatSidebar({ conversations }: { conversations: ChatConversation
 
   return (
     <div className="w-full md:w-60 md:shrink-0 md:border-r md:border-neutral-200 dark:md:border-neutral-800 md:pr-4">
-      <div className="mb-3 flex items-center gap-2">
-        <Link
-          href="/"
-          className="flex-1 rounded-lg border border-neutral-200 dark:border-neutral-800 px-3 py-2 text-center text-sm font-medium hover:border-neutral-400 dark:hover:border-neutral-600"
-        >
-          + New chat
-        </Link>
+      <div className="mb-4 flex items-center justify-between">
+        <span className="font-serif text-lg">Streaks</span>
         <button
           type="button"
           onClick={toggleCollapsed}
-          aria-label="Collapse chat history"
-          className="shrink-0 rounded-lg border border-neutral-200 dark:border-neutral-800 px-2 py-2 text-xs text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100"
+          aria-label="Close sidebar"
+          title="Close sidebar"
+          className="rounded-lg p-2 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-900 dark:hover:bg-neutral-800 dark:hover:text-neutral-100"
         >
-          «
+          <SidebarIcon />
         </button>
       </div>
+
+      <Link
+        href="/"
+        className="mb-3 block w-full rounded-lg border border-neutral-200 dark:border-neutral-800 px-3 py-2 text-center text-sm font-medium hover:border-neutral-400 dark:hover:border-neutral-600"
+      >
+        + New chat
+      </Link>
 
       {conversations.length > 0 && (
         <div className="flex flex-row md:flex-col gap-1 overflow-x-auto md:overflow-visible pb-2 md:pb-0">
