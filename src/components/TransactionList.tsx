@@ -53,6 +53,7 @@ function TransactionRow({
     const initialSplits = t.transaction_splits.map((s) => ({
       name: s.person_name,
       amount: String(s.amount),
+      kind: s.kind,
     }));
 
     return (
@@ -177,8 +178,27 @@ function TransactionRow({
         )}
         {hasSplit && (
           <span className="shrink-0 truncate text-[10px] text-neutral-400">
-            your share {currency.format(t.my_share ?? t.amount)} · split with{" "}
-            {t.transaction_splits.map((s) => s.person_name).join(", ")}
+            your share {currency.format(t.my_share ?? t.amount)}
+            {t.transaction_splits.some((s) => s.kind === "split") && (
+              <>
+                {" "}
+                · split with{" "}
+                {t.transaction_splits
+                  .filter((s) => s.kind === "split")
+                  .map((s) => s.person_name)
+                  .join(", ")}
+              </>
+            )}
+            {t.transaction_splits.some((s) => s.kind === "gift") && (
+              <>
+                {" "}
+                · gifted to{" "}
+                {t.transaction_splits
+                  .filter((s) => s.kind === "gift")
+                  .map((s) => s.person_name)
+                  .join(", ")}
+              </>
+            )}
           </span>
         )}
       </div>

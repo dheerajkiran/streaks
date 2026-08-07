@@ -80,12 +80,15 @@ export type Transaction = {
   created_at: string;
 };
 
+export type SplitKind = "split" | "gift";
+
 export type TransactionSplit = {
   id: string;
   transaction_id: string;
   user_id: string;
   person_name: string;
   amount: number;
+  kind: SplitKind;
   created_at: string;
 };
 

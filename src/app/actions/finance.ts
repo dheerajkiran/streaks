@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import type { SplitKind } from "@/lib/types";
 
 export async function createFinanceCategory(formData: FormData) {
   const supabase = await createClient();
@@ -30,9 +31,20 @@ export async function deleteFinanceCategory(categoryId: string) {
 function parseSplits(formData: FormData) {
   const names = formData.getAll("split_person").map((v) => String(v).trim());
   const amounts = formData.getAll("split_amount").map((v) => Number(v));
+  const kinds = formData.getAll("split_kind").map((v) => String(v));
   return names
-    .map((name, i) => ({ name, amount: amounts[i] }))
+    .map((name, i) => ({
+      name,
+      amount: amounts[i],
+      kind: (kinds[i] === "gift" ? "gift" : "split") as SplitKind,
+    }))
     .filter((s) => s.name && Number.isFinite(s.amount) && s.amount > 0);
+}
+
+function computeMyShare(amount: number, splits: { amount: number; kind: SplitKind }[]) {
+  if (splits.length === 0) return null;
+  const owedBack = splits.filter((s) => s.kind === "split").reduce((sum, s) => sum + s.amount, 0);
+  return amount - owedBack;
 }
 
 export async function addTransaction(formData: FormData) {
@@ -54,13 +66,9 @@ export async function addTransaction(formData: FormData) {
   }
 
   const splits = parseSplits(formData);
-  let myShare: number | null = null;
-  if (splits.length > 0) {
-    const othersTotal = splits.reduce((sum, s) => sum + s.amount, 0);
-    myShare = amount - othersTotal;
-    if (myShare < 0) {
-      return { error: "The split amounts add up to more than the total." };
-    }
+  const myShare = computeMyShare(amount, splits);
+  if (myShare !== null && myShare < 0) {
+    return { error: "The split amounts add up to more than the total." };
   }
 
   const { data: inserted, error } = await supabase
@@ -85,6 +93,7 @@ export async function addTransaction(formData: FormData) {
         user_id: user.id,
         person_name: s.name,
         amount: s.amount,
+        kind: s.kind,
       }))
     );
     if (splitError) return { error: splitError.message };
@@ -112,13 +121,9 @@ export async function updateTransaction(transactionId: string, formData: FormDat
   }
 
   const splits = parseSplits(formData);
-  let myShare: number | null = null;
-  if (splits.length > 0) {
-    const othersTotal = splits.reduce((sum, s) => sum + s.amount, 0);
-    myShare = amount - othersTotal;
-    if (myShare < 0) {
-      return { error: "The split amounts add up to more than the total." };
-    }
+  const myShare = computeMyShare(amount, splits);
+  if (myShare !== null && myShare < 0) {
+    return { error: "The split amounts add up to more than the total." };
   }
 
   const { error } = await supabase
@@ -147,6 +152,7 @@ export async function updateTransaction(transactionId: string, formData: FormDat
         user_id: user.id,
         person_name: s.name,
         amount: s.amount,
+        kind: s.kind,
       }))
     );
     if (splitError) return { error: splitError.message };

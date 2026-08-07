@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import type { SplitKind } from "@/lib/types";
 
-export type SplitRow = { name: string; amount: string };
+export type SplitRow = { name: string; amount: string; kind: SplitKind };
 
 export function TransactionSplitFields({
   amount,
@@ -13,12 +14,14 @@ export function TransactionSplitFields({
 }) {
   const [splitting, setSplitting] = useState(initialSplits.length > 0);
   const [splits, setSplits] = useState<SplitRow[]>(
-    initialSplits.length > 0 ? initialSplits : [{ name: "", amount: "" }]
+    initialSplits.length > 0 ? initialSplits : [{ name: "", amount: "", kind: "split" }]
   );
 
   const total = Number(amount) || 0;
-  const othersTotal = splits.reduce((sum, s) => sum + (Number(s.amount) || 0), 0);
-  const myShare = total - othersTotal;
+  const owedBack = splits
+    .filter((s) => s.kind === "split")
+    .reduce((sum, s) => sum + (Number(s.amount) || 0), 0);
+  const myShare = total - owedBack;
 
   function updateSplit(index: number, patch: Partial<SplitRow>) {
     setSplits((prev) => prev.map((row, i) => (i === index ? { ...row, ...patch } : row)));
@@ -55,6 +58,33 @@ export function TransactionSplitFields({
                 onChange={(e) => updateSplit(i, { amount: e.target.value })}
                 className="w-24 rounded-lg border border-neutral-300 dark:border-neutral-700 bg-transparent px-3 py-1.5 text-sm outline-none focus:border-neutral-500"
               />
+              <input type="hidden" name="split_kind" value={row.kind} />
+              <div className="flex rounded-lg border border-neutral-300 dark:border-neutral-700 p-0.5 text-xs">
+                <button
+                  type="button"
+                  onClick={() => updateSplit(i, { kind: "split" })}
+                  title="They owe you back - excluded from your spending"
+                  className={`px-2 py-1 rounded-md ${
+                    row.kind === "split"
+                      ? "bg-neutral-900 dark:bg-neutral-100 text-neutral-50 dark:text-neutral-900"
+                      : "text-neutral-500"
+                  }`}
+                >
+                  Split
+                </button>
+                <button
+                  type="button"
+                  onClick={() => updateSplit(i, { kind: "gift" })}
+                  title="Covering it for them - still counts as your spending"
+                  className={`px-2 py-1 rounded-md ${
+                    row.kind === "gift"
+                      ? "bg-neutral-900 dark:bg-neutral-100 text-neutral-50 dark:text-neutral-900"
+                      : "text-neutral-500"
+                  }`}
+                >
+                  Gift
+                </button>
+              </div>
               {splits.length > 1 && (
                 <button
                   type="button"
@@ -69,7 +99,7 @@ export function TransactionSplitFields({
 
           <button
             type="button"
-            onClick={() => setSplits((prev) => [...prev, { name: "", amount: "" }])}
+            onClick={() => setSplits((prev) => [...prev, { name: "", amount: "", kind: "split" }])}
             className="text-xs text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100"
           >
             + Add person
