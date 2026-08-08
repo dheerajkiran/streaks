@@ -219,37 +219,41 @@ function PantryRow({ item }: { item: PantryItem }) {
   const expired = item.expiry_date ? daysUntil(item.expiry_date) < 0 : false;
 
   return (
-    <li className="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-lg border border-neutral-200 dark:border-neutral-800 px-3 py-2 text-sm">
-      <span className="font-medium truncate min-w-0">{item.name}</span>
+    <li className="flex flex-wrap items-center gap-y-1 rounded-lg border border-neutral-200 dark:border-neutral-800 px-3 py-2 text-sm">
+      <span className="w-36 shrink-0 truncate font-medium">{item.name}</span>
 
-      {item.quantity !== null && (
-        <span className="flex items-center gap-1 shrink-0 text-neutral-400">
-          <button
-            type="button"
-            onClick={() => adjustPantryQuantity(item.id, -1)}
-            className="rounded border border-neutral-300 dark:border-neutral-700 px-1.5 hover:border-neutral-500"
-          >
-            -
-          </button>
-          <span className="tabular-nums text-neutral-600 dark:text-neutral-300">
-            {item.quantity} {item.unit ?? ""}
+      <span className="flex w-32 shrink-0 items-center gap-1 text-neutral-400">
+        {item.quantity !== null && (
+          <>
+            <button
+              type="button"
+              onClick={() => adjustPantryQuantity(item.id, -1)}
+              className="rounded border border-neutral-300 dark:border-neutral-700 px-1.5 hover:border-neutral-500"
+            >
+              -
+            </button>
+            <span className="tabular-nums text-neutral-600 dark:text-neutral-300">
+              {item.quantity} {item.unit ?? ""}
+            </span>
+            <button
+              type="button"
+              onClick={() => adjustPantryQuantity(item.id, 1)}
+              className="rounded border border-neutral-300 dark:border-neutral-700 px-1.5 hover:border-neutral-500"
+            >
+              +
+            </button>
+          </>
+        )}
+      </span>
+
+      <span className="w-24 shrink-0 text-[10px]" suppressHydrationWarning>
+        {item.expiry_date && (
+          <span className={expired ? "text-red-500" : "text-neutral-400"}>
+            {expired ? "expired " : "exp. "}
+            {formatDate(item.expiry_date)}
           </span>
-          <button
-            type="button"
-            onClick={() => adjustPantryQuantity(item.id, 1)}
-            className="rounded border border-neutral-300 dark:border-neutral-700 px-1.5 hover:border-neutral-500"
-          >
-            +
-          </button>
-        </span>
-      )}
-
-      {item.expiry_date && (
-        <span className={`shrink-0 text-[10px] ${expired ? "text-red-500" : "text-neutral-400"}`} suppressHydrationWarning>
-          {expired ? "expired " : "exp. "}
-          {formatDate(item.expiry_date)}
-        </span>
-      )}
+        )}
+      </span>
 
       <span className="flex-1" />
 
