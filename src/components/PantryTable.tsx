@@ -232,7 +232,7 @@ function PantryRow({ item }: { item: PantryItem }) {
             >
               -
             </button>
-            <span className="tabular-nums text-neutral-600 dark:text-neutral-300">
+            <span className="w-10 shrink-0 truncate text-center tabular-nums text-neutral-600 dark:text-neutral-300">
               {item.quantity} {item.unit ?? ""}
             </span>
             <button
