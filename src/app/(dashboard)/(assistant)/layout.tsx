@@ -2,7 +2,6 @@ import { createClient } from "@/lib/supabase/server";
 import { ChatSidebar } from "@/components/ChatSidebar";
 import { TodayObjectives } from "@/components/TodayObjectives";
 import { MonthlySpending } from "@/components/MonthlySpending";
-import { WidgetPane } from "@/components/WidgetPane";
 import { getTodayInUserTimeZone } from "@/lib/timezone";
 import type { ChatConversation, Todo } from "@/lib/types";
 
@@ -58,13 +57,9 @@ export default async function AssistantLayout({
     <div className="flex flex-col md:flex-row gap-6 md:gap-8 md:h-full">
       <ChatSidebar conversations={conversations} />
       <div className="flex-1 min-w-0 md:h-full">{children}</div>
-      <div className="w-full md:w-64 md:shrink-0">
-        <WidgetPane
-          widgets={[
-            { key: "today", node: <TodayObjectives todos={todayTodos} /> },
-            { key: "spending", node: <MonthlySpending total={monthlyTotal} breakdown={categoryBreakdown} /> },
-          ]}
-        />
+      <div className="w-full md:w-64 md:shrink-0 space-y-6">
+        <MonthlySpending total={monthlyTotal} breakdown={categoryBreakdown} />
+        <TodayObjectives todos={todayTodos} />
       </div>
     </div>
   );
